@@ -7,6 +7,20 @@ const families = {
   darks: { name: "Dark's Den of Deformity", thronesName: 'Brotherhood Without Pants', icon: '✣', tone: 'crimson', chars: ['Darius Dark', 'Elissandre DeVille', 'Thumbelisa', "Samson O'Toole", 'Mister Giggles'] },
 }
 
+const thronesCharacters = {
+  castle: ['Sanserif Snark', 'Ariel Snark', 'Josh Frost', 'Head Snark', 'Gluten Snark'],
+  hemlock: ['Ceriously Bannister', 'Typsion Bannister', 'Toffy Bratsforëöns', 'Shamey Bannister', 'Trywin Bannister'],
+  blackwater: ['Kelly C', 'Karl Go-Go', 'Rural Jurah', 'Lord Varies', 'Dragons'],
+  darks: ['Stink', 'Sulkwell Tubby', 'Lil Finger', 'Berry of Tart', 'Dave Onion'],
+}
+
+const thronesModifiers = [
+  'had a hand hacked off', 'intruded on incest', 'paid a pretty price', 'meddled with the monarchy', 'was tormented for treachery', 'walked on the wall', 'was served crow by a sovereign', 'beheaded a betrayer', 'fathered a failure', 'learned a lamentable lineage', 'was impugned by an inferior', 'seduced by a sibling', 'soiled themself shamefully', 'was married to a monster', 'received a rude raven', 'was coerced to confess', 'flinched from a fair fight', 'was shamed by a septah', 'was pissed on by the patriarchy', 'bungled in battle', 'was vexed by visions', 'was manipulated by a mayster', 'knew nothing', 'was sentenced to a sky cell', 'committed a castration', 'was warned about winter', 'woke the dragon', 'was unnecessarily undressed', 'was farked by their faults', 'was injured by irony', 'upended an archetype', 'was slowed by the snow', 'was confused by chaos', 'choked on chickens', 'was nicked by a needle', 'wielded wildfire wickedly', 'gorged on guts', 'birthed a beast', 'tumbled from a tower', 'sang about spring', 'turned up at a tournament', 'gabbed gaily in a garden', 'rescued a runt', 'commanded a creature', 'consulted a council', 'was promised a prince', 'was reunited with a relative', 'drank, knew things', 'found a fitting face', 'made pie of their prey', 'collected a coin', 'won a war', 'worked with the wild ones', 'was catastrophically crowned', 'immolated an innocent', 'was lied to by the luminous lord',
+].map((title, index) => ({ id: `thrones-modifier-${index}`, type: 'modifier', title, points: [0, 0, 0], icon: 'none', flavor: 'Effect not yet transcribed.' }))
+
+const thronesEvents = ['The Seed Is Strong', 'Bend the Knee', 'Not Today', "Bobby's Rebellion", 'On the Other Hand', 'Three Eyes', 'Bad News on Black Wings', 'It Is Known', "The King's Caravan Cometh", 'A Man Pays His Debts', "Maystery and Book-Larnin'"].map((title, index) => ({ id: `thrones-event-${index}`, type: 'event', title, text: 'Effect not yet transcribed.', pathos: 0 }))
+const thronesDeaths = ['went to a wedding', 'flew out the floor', 'was devoured by dogs', 'was next on a list', 'was pierced by a porker', 'was killed for a coin', 'was crowned by the call', 'was finished by the faith', 'stabbed by a shadow', 'got greyscale', 'got their head on a pike', 'was shot on the shitter', 'was poisoned by a page', 'was decimated by a dragon', 'became an eggshell walker', "didn't hold the door", 'sent regards to the queen', 'drank themself to death', 'was jabbed in the jugular', 'played the game; did not win'].map((title, index) => ({ id: `thrones-death-${index}`, type: 'death', title, flavor: 'Effect not yet transcribed.', pathos: 0 }))
+
 const deaths = [
   ['ran out of air', 'The last breath was the quietest.'], ['fell from on high', 'Sometimes you have to take a dive.'], ['died without cares', 'We should all be so lucky.'],
   ['was eaten by bears', 'Bears have to eat too.'], ['was baked into a pie', 'Dead but delicious!'], ['died of despair', 'A person can only take so much heartache.'],
@@ -43,22 +57,27 @@ const modifierSeed = [
 const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) => ({ id: `modifier-${index}`, type: 'modifier', title, points: [top, middle, bottom], icon, flavor: 'A fresh misfortune takes root.' }))
 
 const allCards = [...modifiers, ...events, ...deaths]
+const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
 const living = (name, family, index) => ({ id: `${family}-${index}`, name, family, alive: true, modifiers: [], pathos: 0 })
 
-function seededDeck() {
-  return [...allCards].sort((a, b) => (a.id.charCodeAt(0) * 17 + a.id.length) - (b.id.charCodeAt(0) * 13 + b.id.length))
+function seededDeck(mode = 'original') {
+  return [...cardsForMode(mode)].sort((a, b) => (a.id.charCodeAt(0) * 17 + a.id.length) - (b.id.charCodeAt(0) * 13 + b.id.length))
 }
 
 function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
   const rivalFamilies = Object.keys(families).filter((key) => key !== playerFamily).slice(0, botCount)
-  const playerChars = families[playerFamily].chars.map((name, i) => living(name, playerFamily, i))
-  const deck = seededDeck()
+  const characterSets = mode === 'thrones' ? thronesCharacters : Object.fromEntries(Object.entries(families).map(([key, family]) => [key, family.chars]))
+  const playerChars = characterSets[playerFamily].map((name, i) => living(name, playerFamily, i))
+  const deck = seededDeck(mode)
   const botNames = ['Lady Mourning', 'The Pale Cousin', 'Baron Nocturne']
-  const bots = rivalFamilies.map((family, index) => ({ id: `bot-${index + 1}`, name: botNames[index], family, chars: families[family].chars.map((name, i) => living(name, family, i)) }))
+  const bots = rivalFamilies.map((family, index) => ({ id: `bot-${index + 1}`, name: botNames[index], family, chars: characterSets[family].map((name, i) => living(name, family, i)) }))
+  const handStart = 5
+  const botHandStart = handStart
+  const deckStart = botHandStart + botCount * 5
   return {
-    turn: 1, active: 'player', plays: 0, selectedCard: null, target: null, mode, botCount, deck: deck.slice(20), discard: deck.slice(0, 10),
-    hand: deck.slice(10, 15), botHands: Object.fromEntries(bots.map((bot, index) => [bot.id, deck.slice(15 + index * 5, 20 + index * 5)])), log: ['The table is set. Five families wait beneath the black sky.', `Your family: ${families[playerFamily].name}. ${bots.length} rival${bots.length === 1 ? '' : 's'} wait in the dark.`],
+    turn: 1, active: 'player', plays: 0, selectedCard: null, target: null, mode, botCount, deck: deck.slice(deckStart), discard: [],
+    hand: deck.slice(0, handStart), botHands: Object.fromEntries(bots.map((bot, index) => [bot.id, deck.slice(botHandStart + index * 5, botHandStart + (index + 1) * 5)])), log: ['The table is set. Five families wait beneath the black sky.', `Your family: ${mode === 'thrones' ? families[playerFamily].thronesName : families[playerFamily].name}. ${bots.length} rival${bots.length === 1 ? '' : 's'} wait in the dark.`],
     players: [{ id: 'player', name: 'You', family: playerFamily, chars: playerChars }, ...bots],
   }
 }
@@ -292,7 +311,7 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
       <div className="lobby-brand"><span className="lobby-mark">✠</span><span className="eyebrow">{text.eyebrow}</span><h1>Gloom</h1></div>
       <div className="lobby-panel">
         <div className="lobby-field"><span className="eyebrow">{text.mode}</span><div className="edition-picker"><button className={`edition-option ${mode === 'original' ? 'selected' : ''}`} onClick={() => onMode('original')}><strong>{text.original}</strong><small>{text.originalNote}</small></button><button className={`edition-option ${mode === 'thrones' ? 'selected' : ''}`} onClick={() => onMode('thrones')}><strong>{text.thrones}</strong><small>{text.thronesNote}</small></button></div></div>
-        <div className="lobby-field"><span className="eyebrow">{text.family}</span><div className="family-picker">{Object.entries(families).map(([key, option]) => <button key={key} className={`family-option ${key === chosenFamily ? 'selected' : ''}`} onClick={() => onChooseFamily(key)}><span className={`family-glyph ${option.tone}`}>{option.icon}</span><span><strong>{mode === 'thrones' ? option.thronesName : option.name}</strong><small>{option.chars[0]} · {option.chars.length} characters</small></span></button>)}</div></div>
+        <div className="lobby-field"><span className="eyebrow">{text.family}</span><div className="family-picker">{Object.entries(families).map(([key, option]) => <button key={key} className={`family-option ${key === chosenFamily ? 'selected' : ''}`} onClick={() => onChooseFamily(key)}><span className={`family-glyph ${option.tone}`}>{option.icon}</span><span><strong>{mode === 'thrones' ? option.thronesName : option.name}</strong><small>{(mode === 'thrones' ? thronesCharacters[key][0] : option.chars[0])} · 5 characters</small></span></button>)}</div></div>
         <div className="lobby-field"><span className="eyebrow">{text.bots}</span><div className="bot-picker">{[1, 2, 3].map((count) => <button key={count} className={`bot-option ${count === botCount ? 'selected' : ''}`} onClick={() => onBotCount(count)}><strong>{count}</strong></button>)}</div></div>
         <button className="lobby-start" onClick={onStart}><span>{text.start}</span><b>→</b></button>
         <div className="lobby-footnote"><span>{text.hash} {BUILD_VERSION}</span></div>
