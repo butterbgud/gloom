@@ -72,18 +72,17 @@ function App() {
   const [chosenFamily, setChosenFamily] = useState('castle')
   const [language, setLanguage] = useState('en')
   const [mode, setMode] = useState('original')
+  useEffect(() => {
+    if (game.active !== 'rival' || screen === 'lobby') return undefined
+    const timer = setTimeout(runBotTurn, 650)
+    return () => clearTimeout(timer)
+  }, [game.active, game.turn, screen])
   const [view, setView] = useState('table')
   if (screen === 'lobby') return <Lobby language={language} onLanguage={setLanguage} mode={mode} onMode={setMode} chosenFamily={chosenFamily} onChooseFamily={setChosenFamily} onStart={() => { setGame(makeGame(chosenFamily, mode)); setScreen('table') }} />
   const activePlayer = game.players.find((p) => p.id === game.active)
   const selected = game.hand.find((card) => card.id === game.selectedCard)
   const familyScore = (player) => player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
   const playable = selected && (selected.type === 'event' || selected.type === 'death' || selected.type === 'modifier')
-
-  useEffect(() => {
-    if (game.active !== 'rival') return undefined
-    const timer = setTimeout(runBotTurn, 650)
-    return () => clearTimeout(timer)
-  }, [game.active, game.turn])
 
   const setSelection = (card) => setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, target: null }))
   const chooseTarget = (playerId, charId) => setGame((g) => ({ ...g, target: { playerId, charId } }))
