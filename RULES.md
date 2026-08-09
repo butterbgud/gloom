@@ -11,6 +11,11 @@ that final score.
 The supplied deck contains 20 Character cards, 58 Modifier cards, 12 Event
 cards, and 20 Untimely Death cards.
 
+Gloom of Thrones is a separate expansion edition. Its rulebook introduces a
+unique Porcelain Throne card, a Monarch state, crown icons, and expansion-only
+effect categories. Its source PDF is kept locally for development but is not
+committed to the repository.
+
 ## Setup
 
 - Each player chooses a family and takes its five Character cards.
@@ -51,3 +56,28 @@ family boards, a rival board, chronicle logging, and the dark table UI.
 Card-specific effects and multiplayer networking are intentionally staged for
 the next iteration. The card names and base values are transcribed from the
 supplied card PDF so those effects can be added without changing the UI model.
+
+## Gloom of Thrones rules baseline
+
+The Thrones rulebook keeps the core loop: five Characters per family,
+five-card hands, two actions, and the lowest dead-family score wins.
+
+- Set aside the Porcelain Throne and reference cards; they are not shuffled.
+- Modifiers may be played on any living Character, including an opponent's.
+- Character effects belong to the Character's owner, not necessarily the
+  player who played the Modifier.
+- Effects are immediate, ongoing, persistent, or response effects. Visibility
+  follows the stacking rule: covered points, icons, and effects no longer count,
+  except persistent effects.
+- The Porcelain Throne starts uncontrolled. A newly played crown icon transfers
+  it to the Character with the newest crown; that Character becomes the Monarch
+  and receives -30 Self-Worth.
+- The Monarch's controller may play Untimely Death as a second action, but only
+  against an opponent's Character. If the Monarch dies, the Throne returns to
+  the center unless that death ends the game; a living Monarch scores its -30
+  Throne points at game end but not its other Self-Worth points.
+- Free plays do not consume the normal two-action limit. A free Untimely Death
+  may be played regardless of whether it came from the first or second action.
+- Players may discard their entire hand as a special action, or pass.
+- Storytelling is a central social rule: players explain the misery behind each
+  action, with no formal scoring for story quality.
