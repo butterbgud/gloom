@@ -43,19 +43,20 @@ const modifierSeed = [
 const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) => ({ id: `modifier-${index}`, type: 'modifier', title, points: [top, middle, bottom], icon, flavor: 'A fresh misfortune takes root.' }))
 
 const allCards = [...modifiers, ...events, ...deaths]
+const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
 const living = (name, family, index) => ({ id: `${family}-${index}`, name, family, alive: true, modifiers: [], pathos: 0 })
 
 function seededDeck() {
   return [...allCards].sort((a, b) => (a.id.charCodeAt(0) * 17 + a.id.length) - (b.id.charCodeAt(0) * 13 + b.id.length))
 }
 
-function makeGame(playerFamily = 'castle') {
+function makeGame(playerFamily = 'castle', mode = 'original') {
   const rivalFamily = Object.keys(families).find((key) => key !== playerFamily) || 'hemlock'
   const playerChars = families[playerFamily].chars.map((name, i) => living(name, playerFamily, i))
   const rivalChars = families[rivalFamily].chars.map((name, i) => living(name, rivalFamily, i))
   const deck = seededDeck()
   return {
-    turn: 1, active: 'player', plays: 0, selectedCard: null, target: null, deck: deck.slice(20), discard: deck.slice(0, 10),
+    turn: 1, active: 'player', plays: 0, selectedCard: null, target: null, mode, deck: deck.slice(20), discard: deck.slice(0, 10),
     hand: deck.slice(10, 15), rivalHand: deck.slice(15, 20), log: ['The table is set. Five families wait beneath the black sky.', 'Your family: Castle Slogar. Your rival: Hemlock Hall.'],
     players: [{ id: 'player', name: 'You', family: playerFamily, chars: playerChars }, { id: 'rival', name: 'Lady Mourning', family: rivalFamily, chars: rivalChars }],
   }
@@ -69,8 +70,10 @@ function App() {
   const [game, setGame] = useState(makeGame)
   const [screen, setScreen] = useState('lobby')
   const [chosenFamily, setChosenFamily] = useState('castle')
+  const [language, setLanguage] = useState('en')
+  const [mode, setMode] = useState('original')
   const [view, setView] = useState('table')
-  if (screen === 'lobby') return <Lobby chosenFamily={chosenFamily} onChooseFamily={setChosenFamily} onStart={() => { setGame(makeGame(chosenFamily)); setScreen('table') }} />
+  if (screen === 'lobby') return <Lobby language={language} onLanguage={setLanguage} mode={mode} onMode={setMode} chosenFamily={chosenFamily} onChooseFamily={setChosenFamily} onStart={() => { setGame(makeGame(chosenFamily, mode)); setScreen('table') }} />
   const activePlayer = game.players.find((p) => p.id === game.active)
   const selected = game.hand.find((card) => card.id === game.selectedCard)
   const familyScore = (player) => player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
@@ -205,7 +208,7 @@ function App() {
     })
   }
 
-  const reset = () => { setGame(makeGame(chosenFamily)); setScreen('lobby') }
+  const reset = () => { setGame(makeGame(chosenFamily, mode)); setScreen('lobby') }
   const targetHint = selected?.type === 'death' ? 'Choose a living character with negative Self-Worth.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
 
   return <div className="app-shell">
@@ -236,20 +239,28 @@ function App() {
   </div>
 }
 
-function Lobby({ chosenFamily, onChooseFamily, onStart }) {
+function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamily, onStart }) {
   const family = families[chosenFamily]
+  const en = language === 'en'
+  const text = en ? {
+    eyebrow: 'A card game of unfortunate lives', subtitle: 'Misery loves company.', before: 'Before the sorrow begins', gather: 'Gather around the table', family: 'Choose your family', house: 'Your house', souls: 'Five unfortunate souls await their first misfortune.', players: 'Players', rival: 'you + rival', mode: 'Choose your edition', original: 'Original Gloom', originalNote: 'The classic deck', thrones: 'Gloom of Thrones', thronesNote: 'Card set coming soon', start: 'Enter the séance', prototype: 'Prototype build', lowest: 'Lowest Family Value wins', quote: '“There is no fate but what we make for ourselves.\nUnfortunately, ours is usually dreadful.”', language: 'Language', hash: 'build'
+  } : {
+    eyebrow: 'Карточная игра о несчастных жизнях', subtitle: 'Несчастье любит компанию.', before: 'До начала печали', gather: 'Соберитесь за столом', family: 'Выберите семью', house: 'Ваш дом', souls: 'Пять несчастных душ ждут своей первой беды.', players: 'Игроки', rival: 'вы + соперник', mode: 'Выберите издание', original: 'Оригинальный Gloom', originalNote: 'Классическая колода', thrones: 'Gloom of Thrones', thronesNote: 'Карты скоро появятся', start: 'Войти в сеанс', prototype: 'Прототип', lowest: 'Побеждает семья с меньшим значением', quote: '«Нет судьбы, кроме той, что мы создаём сами.\nК сожалению, обычно она ужасна».', language: 'Язык', hash: 'сборка'
+  }
   return <div className="lobby-shell">
     <div className="lobby-vignette" />
     <div className="lobby-content">
-      <div className="lobby-brand"><span className="lobby-mark">✠</span><span className="eyebrow">A card game of unfortunate lives</span><h1>Gloom</h1><p>Misery loves company.</p></div>
+      <div className="lobby-brand"><span className="lobby-mark">✠</span><span className="eyebrow">{text.eyebrow}</span><h1>Gloom</h1><p>{text.subtitle}</p></div>
       <div className="lobby-panel">
-        <div className="lobby-panel-head"><div><span className="eyebrow">Before the sorrow begins</span><h2>Gather around the table</h2></div><span className="lobby-seal">II</span></div>
-        <div className="lobby-field"><span className="eyebrow">Choose your family</span><div className="family-picker">{Object.entries(families).map(([key, option]) => <button key={key} className={`family-option ${key === chosenFamily ? 'selected' : ''}`} onClick={() => onChooseFamily(key)}><span className={`family-glyph ${option.tone}`}>{option.icon}</span><span><strong>{option.name}</strong><small>{option.chars[0]} · {option.chars.length} characters</small></span></button>)}</div></div>
-        <div className="lobby-summary"><div className="summary-emblem"><span className={`family-glyph ${family.tone}`}>{family.icon}</span></div><div><span className="eyebrow">Your house</span><strong>{family.name}</strong><p>Five unfortunate souls await their first misfortune.</p></div><div className="summary-count"><span className="eyebrow">Players</span><strong>2</strong><small>you + rival</small></div></div>
-        <button className="lobby-start" onClick={onStart}><span>Enter the séance</span><b>→</b></button>
-        <div className="lobby-footnote"><span>Prototype build</span><span>Lowest Family Value wins</span></div>
+        <div className="lobby-panel-head"><div><span className="eyebrow">{text.before}</span><h2>{text.gather}</h2></div><span className="lobby-seal">II</span></div>
+        <div className="lobby-toolbar"><span className="eyebrow">{text.language}</span><div className="language-switch"><button className={en ? 'selected' : ''} onClick={() => onLanguage('en')}>EN</button><button className={!en ? 'selected' : ''} onClick={() => onLanguage('ru')}>RU</button></div></div>
+        <div className="lobby-field"><span className="eyebrow">{text.mode}</span><div className="edition-picker"><button className={`edition-option ${mode === 'original' ? 'selected' : ''}`} onClick={() => onMode('original')}><strong>{text.original}</strong><small>{text.originalNote}</small></button><button className={`edition-option ${mode === 'thrones' ? 'selected' : ''}`} onClick={() => onMode('thrones')}><strong>{text.thrones}</strong><small>{text.thronesNote}</small></button></div></div>
+        <div className="lobby-field"><span className="eyebrow">{text.family}</span><div className="family-picker">{Object.entries(families).map(([key, option]) => <button key={key} className={`family-option ${key === chosenFamily ? 'selected' : ''}`} onClick={() => onChooseFamily(key)}><span className={`family-glyph ${option.tone}`}>{option.icon}</span><span><strong>{option.name}</strong><small>{option.chars[0]} · {option.chars.length} characters</small></span></button>)}</div></div>
+        <div className="lobby-summary"><div className="summary-emblem"><span className={`family-glyph ${family.tone}`}>{family.icon}</span></div><div><span className="eyebrow">{text.house}</span><strong>{family.name}</strong><p>{text.souls}</p></div><div className="summary-count"><span className="eyebrow">{text.players}</span><strong>2</strong><small>{text.rival}</small></div></div>
+        <button className="lobby-start" onClick={onStart}><span>{text.start}</span><b>→</b></button>
+        <div className="lobby-footnote"><span>{text.prototype} · {text.hash} {BUILD_VERSION}</span><span>{text.lowest}</span></div>
       </div>
-      <div className="lobby-quote">“There is no fate but what we make for ourselves.<br />Unfortunately, ours is usually dreadful.”</div>
+      <div className="lobby-quote">{text.quote.split('\n').map((line) => <React.Fragment key={line}>{line}<br /></React.Fragment>)}</div>
     </div>
   </div>
 }
