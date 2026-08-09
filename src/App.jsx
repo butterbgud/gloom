@@ -279,9 +279,9 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
   const backgroundUrl = (edition) => edition === 'thrones' ? '/assets/lobby-thrones.webp' : '/assets/lobby-original.webp'
   const en = language === 'en'
   const text = en ? {
-    eyebrow: 'A card game of unfortunate lives', subtitle: 'Misery loves company.', family: 'Choose your family', bots: 'Number of bots', botSingular: 'bot', botPlural: 'bots', mode: 'Choose your edition', original: 'Original Gloom', originalNote: 'The classic deck', thrones: 'Gloom of Thrones', thronesNote: 'Card set coming soon', start: 'Enter the séance', prototype: 'Prototype build', lowest: 'Lowest Family Value wins', quote: '“There is no fate but what we make for ourselves.\nUnfortunately, ours is usually dreadful.”', hash: 'build'
+    eyebrow: 'A card game of unfortunate lives', subtitle: '', family: 'Choose your family', bots: 'Number of bots', mode: 'Choose your edition', original: 'Original Gloom', originalNote: 'The classic deck', thrones: 'Gloom of Thrones', thronesNote: 'Card set coming soon', start: 'Enter the séance', quote: '“There is no fate but what we make for ourselves.\nUnfortunately, ours is usually dreadful.”', hash: 'build'
   } : {
-    eyebrow: 'Карточная игра о несчастных жизнях', subtitle: 'Несчастье любит компанию.', family: 'Выберите семью', bots: 'Число ботов', botSingular: 'бот', botPlural: 'бота', mode: 'Выберите издание', original: 'Оригинальный Gloom', originalNote: 'Классическая колода', thrones: 'Gloom of Thrones', thronesNote: 'Карты скоро появятся', start: 'Войти в сеанс', prototype: 'Прототип', lowest: 'Побеждает семья с меньшим значением', quote: '«Нет судьбы, кроме той, что мы создаём сами.\nК сожалению, обычно она ужасна».', hash: 'сборка'
+    eyebrow: 'Карточная игра о несчастных жизнях', subtitle: '', family: 'Выберите семью', bots: 'Число ботов', mode: 'Выберите издание', original: 'Оригинальный Gloom', originalNote: 'Классическая колода', thrones: 'Gloom of Thrones', thronesNote: 'Карты скоро появятся', start: 'Войти в сеанс', quote: '«Нет судьбы, кроме той, что мы создаём сами.\nК сожалению, обычно она ужасна».', hash: 'сборка'
   }
   return <div className="lobby-shell">
     <div className="lobby-bg" style={{ backgroundImage: `url(${backgroundUrl(backgroundMode)})` }} />
@@ -289,13 +289,13 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
     <div className="lobby-vignette" />
     <div className="lobby-language"><button className={en ? 'selected' : ''} onClick={() => onLanguage('en')}>EN</button><button className={!en ? 'selected' : ''} onClick={() => onLanguage('ru')}>RU</button></div>
     <div className="lobby-content">
-      <div className="lobby-brand"><span className="lobby-mark">✠</span><span className="eyebrow">{text.eyebrow}</span><h1>Gloom</h1><p>{text.subtitle}</p></div>
+      <div className="lobby-brand"><span className="lobby-mark">✠</span><span className="eyebrow">{text.eyebrow}</span><h1>Gloom</h1></div>
       <div className="lobby-panel">
         <div className="lobby-field"><span className="eyebrow">{text.mode}</span><div className="edition-picker"><button className={`edition-option ${mode === 'original' ? 'selected' : ''}`} onClick={() => onMode('original')}><strong>{text.original}</strong><small>{text.originalNote}</small></button><button className={`edition-option ${mode === 'thrones' ? 'selected' : ''}`} onClick={() => onMode('thrones')}><strong>{text.thrones}</strong><small>{text.thronesNote}</small></button></div></div>
         <div className="lobby-field"><span className="eyebrow">{text.family}</span><div className="family-picker">{Object.entries(families).map(([key, option]) => <button key={key} className={`family-option ${key === chosenFamily ? 'selected' : ''}`} onClick={() => onChooseFamily(key)}><span className={`family-glyph ${option.tone}`}>{option.icon}</span><span><strong>{mode === 'thrones' ? option.thronesName : option.name}</strong><small>{option.chars[0]} · {option.chars.length} characters</small></span></button>)}</div></div>
-        <div className="lobby-field"><span className="eyebrow">{text.bots}</span><div className="bot-picker">{[1, 2, 3].map((count) => <button key={count} className={`bot-option ${count === botCount ? 'selected' : ''}`} onClick={() => onBotCount(count)}><strong>{count}</strong><small>{count === 1 ? text.botSingular : text.botPlural}</small></button>)}</div></div>
+        <div className="lobby-field"><span className="eyebrow">{text.bots}</span><div className="bot-picker">{[1, 2, 3].map((count) => <button key={count} className={`bot-option ${count === botCount ? 'selected' : ''}`} onClick={() => onBotCount(count)}><strong>{count}</strong></button>)}</div></div>
         <button className="lobby-start" onClick={onStart}><span>{text.start}</span><b>→</b></button>
-        <div className="lobby-footnote"><span>{text.prototype} · {text.hash} {BUILD_VERSION}</span><span>{text.lowest}</span></div>
+        <div className="lobby-footnote"><span>{text.hash} {BUILD_VERSION}</span></div>
       </div>
       <div className="lobby-quote">{text.quote.split('\n').map((line) => <React.Fragment key={line}>{line}<br /></React.Fragment>)}</div>
     </div>
