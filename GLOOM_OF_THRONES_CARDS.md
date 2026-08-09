@@ -16,9 +16,58 @@ uncertain.
 
 ## Characters
 
-| id | name | family | self-worth | icons | flavor | source |
-|---|---|---|---|---|---|---|
-| `thrones_character_001` |  |  |  |  |  |  |
+Record one row per Character. The `self-worth`, `icons`, flavor, and source
+fields can be filled in as the card faces are inspected.
+
+### House Snark
+
+| id | name | self-worth | icons | flavor | source |
+|---|---|---|---|---|---|
+| `thrones_character_snark_sanserif` | Sanserif Snark |  |  |  |  |
+| `thrones_character_snark_arial` | Arial Snark |  |  |  |  |
+| `thrones_character_snark_josh_frost` | Josh Frost |  |  |  |  |
+| `thrones_character_snark_head` | Head Snark |  |  |  |  |
+| `thrones_character_snark_gluten` | Gluten Snark |  |  |  |  |
+
+### House Bannister
+
+| id | name | self-worth | icons | flavor | source |
+|---|---|---|---|---|---|
+| `thrones_character_bannister_ceriously` | Ceriously Bannister |  |  |  |  |
+| `thrones_character_bannister_typsion` | Typsion Bannister |  |  |  |  |
+| `thrones_character_bannister_toffy` | Toffy Bratsforëöns |  |  |  |  |
+| `thrones_character_bannister_shamey` | Shamey Bannister |  |  |  |  |
+| `thrones_character_bannister_trywin` | Trywin Bannister |  |  |  |  |
+
+### Kelly's Dragons
+
+| id | name | self-worth | icons | flavor | source |
+|---|---|---|---|---|---|
+| `thrones_character_dragons_kelly` | Kelly C |  |  |  |  |
+| `thrones_character_dragons_karl` | Karl Go-Go |  |  |  |  |
+| `thrones_character_dragons_rural` | Rural Jurah |  |  |  |  |
+| `thrones_character_dragons_lord_varies` | Lord Varies |  |  |  |  |
+| `thrones_character_dragons_dragons` | Dragons |  |  |  |  |
+
+### Brotherhood Without Pants
+
+| id | name | self-worth | icons | flavor | source |
+|---|---|---|---|---|---|
+| `thrones_character_pants_stink` | Stink |  |  |  |  |
+| `thrones_character_pants_sulkwell` | Sulkwell Tubby |  |  |  |  |
+| `thrones_character_pants_lil_finger` | Lil Finger |  |  |  |  |
+| `thrones_character_pants_berry` | Berry of Tart |  |  |  |  |
+| `thrones_character_pants_dave` | Dave Onion |  |  |  |  |
+
+### Kickstarter special
+
+| id | name | self-worth | icons | flavor | source |
+|---|---|---|---|---|---|
+| `thrones_character_kickstarter_doge` | Doge |  |  |  |  |
+| `thrones_character_kickstarter_margarine` | Margarine |  |  |  |  |
+| `thrones_character_kickstarter_melodramadre` | Melodramadre |  |  |  |  |
+| `thrones_character_kickstarter_hurdur` | Hurdur |  |  |  |  |
+| `thrones_character_kickstarter_night_knight` | Night Knight |  |  |  |  |
 
 ## Modifiers
 
@@ -57,4 +106,3 @@ Record reference cards here if they contain implementation-relevant wording.
 ## Unresolved questions
 
 - 
-
