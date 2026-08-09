@@ -241,6 +241,22 @@ function App() {
 
 function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamily, onStart }) {
   const family = families[chosenFamily]
+  const [backgroundMode, setBackgroundMode] = useState(mode)
+  const [incomingMode, setIncomingMode] = useState(null)
+  const [backgroundVisible, setBackgroundVisible] = useState(false)
+  useEffect(() => {
+    if (mode === backgroundMode) return undefined
+    setIncomingMode(mode)
+    setBackgroundVisible(false)
+    const start = setTimeout(() => setBackgroundVisible(true), 20)
+    const finish = setTimeout(() => {
+      setBackgroundMode(mode)
+      setIncomingMode(null)
+      setBackgroundVisible(false)
+    }, 2020)
+    return () => { clearTimeout(start); clearTimeout(finish) }
+  }, [mode, backgroundMode])
+  const backgroundUrl = (edition) => edition === 'thrones' ? '/assets/lobby-thrones.webp' : '/assets/lobby-original.webp'
   const en = language === 'en'
   const text = en ? {
     eyebrow: 'A card game of unfortunate lives', subtitle: 'Misery loves company.', before: 'Before the sorrow begins', gather: 'Gather around the table', family: 'Choose your family', house: 'Your house', souls: 'Five unfortunate souls await their first misfortune.', players: 'Players', rival: 'you + rival', mode: 'Choose your edition', original: 'Original Gloom', originalNote: 'The classic deck', thrones: 'Gloom of Thrones', thronesNote: 'Card set coming soon', start: 'Enter the séance', prototype: 'Prototype build', lowest: 'Lowest Family Value wins', quote: '“There is no fate but what we make for ourselves.\nUnfortunately, ours is usually dreadful.”', language: 'Language', hash: 'build'
@@ -248,6 +264,8 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
     eyebrow: 'Карточная игра о несчастных жизнях', subtitle: 'Несчастье любит компанию.', before: 'До начала печали', gather: 'Соберитесь за столом', family: 'Выберите семью', house: 'Ваш дом', souls: 'Пять несчастных душ ждут своей первой беды.', players: 'Игроки', rival: 'вы + соперник', mode: 'Выберите издание', original: 'Оригинальный Gloom', originalNote: 'Классическая колода', thrones: 'Gloom of Thrones', thronesNote: 'Карты скоро появятся', start: 'Войти в сеанс', prototype: 'Прототип', lowest: 'Побеждает семья с меньшим значением', quote: '«Нет судьбы, кроме той, что мы создаём сами.\nК сожалению, обычно она ужасна».', language: 'Язык', hash: 'сборка'
   }
   return <div className="lobby-shell">
+    <div className="lobby-bg" style={{ backgroundImage: `url(${backgroundUrl(backgroundMode)})` }} />
+    {incomingMode && <div className={`lobby-bg lobby-bg-incoming ${backgroundVisible ? 'visible' : ''}`} style={{ backgroundImage: `url(${backgroundUrl(incomingMode)})` }} />}
     <div className="lobby-vignette" />
     <div className="lobby-content">
       <div className="lobby-brand"><span className="lobby-mark">✠</span><span className="eyebrow">{text.eyebrow}</span><h1>Gloom</h1><p>{text.subtitle}</p></div>
