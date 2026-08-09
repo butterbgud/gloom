@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
 
 const families = {
-  castle: { name: 'Castle Slogar', icon: '☿', tone: 'violet', chars: ['Lord Slogar', 'Elias E. Gorr', 'Grogar', 'Melissa Slogar', 'Professor Helena Slogar'] },
-  hemlock: { name: 'Hemlock Hall', icon: '♠', tone: 'amber', chars: ['Goody Zarr', 'Lola Wellington-Smythe', 'The Twins', 'Lord Wellington-Smythe', 'Butterfield'] },
-  blackwater: { name: 'Blackwater Watch', icon: '†', tone: 'blue', chars: ['Angel', 'Balthazar', 'The Old Dam', 'Cousin Mordecai', 'Willem Stark'] },
-  darks: { name: "Dark's Den of Deformity", icon: '✣', tone: 'crimson', chars: ['Darius Dark', 'Elissandre DeVille', 'Thumbelisa', "Samson O'Toole", 'Mister Giggles'] },
+  castle: { name: 'Castle Slogar', thronesName: 'House Snark', icon: '☿', tone: 'violet', chars: ['Lord Slogar', 'Elias E. Gorr', 'Grogar', 'Melissa Slogar', 'Professor Helena Slogar'] },
+  hemlock: { name: 'Hemlock Hall', thronesName: 'House Bannister', icon: '♠', tone: 'amber', chars: ['Goody Zarr', 'Lola Wellington-Smythe', 'The Twins', 'Lord Wellington-Smythe', 'Butterfield'] },
+  blackwater: { name: 'Blackwater Watch', thronesName: "Kelly's Dragons", icon: '†', tone: 'blue', chars: ['Angel', 'Balthazar', 'The Old Dam', 'Cousin Mordecai', 'Willem Stark'] },
+  darks: { name: "Dark's Den of Deformity", thronesName: 'Brotherhood Without Pants', icon: '✣', tone: 'crimson', chars: ['Darius Dark', 'Elissandre DeVille', 'Thumbelisa', "Samson O'Toole", 'Mister Giggles'] },
 }
 
 const deaths = [
@@ -221,7 +221,7 @@ function App() {
         <div className="table-header"><div><span className="eyebrow">A sad little world</span><h2>House of Misfortune</h2></div><div className="turn-badge"><span>TURN</span><strong>{game.turn}</strong><small>{activePlayer.name}'s hand</small></div></div>
         <div className="table-ribbon"><span><b>Lowest Family Value wins</b> · All visible Pathos counts only after death.</span><span className="plays">Plays remaining <b>{Math.max(0, 2 - game.plays)}</b></span></div>
         <div className="families-grid">
-          {game.players.map((player) => <FamilyBoard key={player.id} player={player} active={player.id === game.active} target={game.target} onTarget={chooseTarget} />)}
+          {game.players.map((player) => <FamilyBoard key={player.id} player={player} mode={game.mode} active={player.id === game.active} target={game.target} onTarget={chooseTarget} />)}
         </div>
         <div className="hand-panel">
           <div className="section-heading"><div><span className="eyebrow">Your hand · {game.hand.length} / 5</span><h2>Cards held close</h2></div><span className="muted">Click a card to inspect and play</span></div>
@@ -255,8 +255,8 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
         <div className="lobby-panel-head"><div><span className="eyebrow">{text.before}</span><h2>{text.gather}</h2></div><span className="lobby-seal">II</span></div>
         <div className="lobby-toolbar"><span className="eyebrow">{text.language}</span><div className="language-switch"><button className={en ? 'selected' : ''} onClick={() => onLanguage('en')}>EN</button><button className={!en ? 'selected' : ''} onClick={() => onLanguage('ru')}>RU</button></div></div>
         <div className="lobby-field"><span className="eyebrow">{text.mode}</span><div className="edition-picker"><button className={`edition-option ${mode === 'original' ? 'selected' : ''}`} onClick={() => onMode('original')}><strong>{text.original}</strong><small>{text.originalNote}</small></button><button className={`edition-option ${mode === 'thrones' ? 'selected' : ''}`} onClick={() => onMode('thrones')}><strong>{text.thrones}</strong><small>{text.thronesNote}</small></button></div></div>
-        <div className="lobby-field"><span className="eyebrow">{text.family}</span><div className="family-picker">{Object.entries(families).map(([key, option]) => <button key={key} className={`family-option ${key === chosenFamily ? 'selected' : ''}`} onClick={() => onChooseFamily(key)}><span className={`family-glyph ${option.tone}`}>{option.icon}</span><span><strong>{option.name}</strong><small>{option.chars[0]} · {option.chars.length} characters</small></span></button>)}</div></div>
-        <div className="lobby-summary"><div className="summary-emblem"><span className={`family-glyph ${family.tone}`}>{family.icon}</span></div><div><span className="eyebrow">{text.house}</span><strong>{family.name}</strong><p>{text.souls}</p></div><div className="summary-count"><span className="eyebrow">{text.players}</span><strong>2</strong><small>{text.rival}</small></div></div>
+        <div className="lobby-field"><span className="eyebrow">{text.family}</span><div className="family-picker">{Object.entries(families).map(([key, option]) => <button key={key} className={`family-option ${key === chosenFamily ? 'selected' : ''}`} onClick={() => onChooseFamily(key)}><span className={`family-glyph ${option.tone}`}>{option.icon}</span><span><strong>{mode === 'thrones' ? option.thronesName : option.name}</strong><small>{option.chars[0]} · {option.chars.length} characters</small></span></button>)}</div></div>
+        <div className="lobby-summary"><div className="summary-emblem"><span className={`family-glyph ${family.tone}`}>{family.icon}</span></div><div><span className="eyebrow">{text.house}</span><strong>{mode === 'thrones' ? family.thronesName : family.name}</strong><p>{text.souls}</p></div><div className="summary-count"><span className="eyebrow">{text.players}</span><strong>2</strong><small>{text.rival}</small></div></div>
         <button className="lobby-start" onClick={onStart}><span>{text.start}</span><b>→</b></button>
         <div className="lobby-footnote"><span>{text.prototype} · {text.hash} {BUILD_VERSION}</span><span>{text.lowest}</span></div>
       </div>
@@ -265,10 +265,11 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
   </div>
 }
 
-function FamilyBoard({ player, active, target, onTarget }) {
+function FamilyBoard({ player, mode, active, target, onTarget }) {
   const family = families[player.family]
+  const familyName = mode === 'thrones' ? family.thronesName : family.name
   const familyValue = player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
-  return <div className={`family-board ${active ? 'active-board' : ''}`}><div className="family-head"><div className={`family-glyph ${family.tone}`}>{family.icon}</div><div><span className="eyebrow">{player.name} · {active ? 'active fate' : 'opponent'}</span><h3>{family.name}</h3></div><div className="family-value"><span>FAMILY VALUE</span><b className={familyValue < 0 ? 'good-score' : ''}>{familyValue > 0 ? '+' : ''}{familyValue}</b></div></div><div className="character-row">{player.chars.map((character) => <CharacterCard key={character.id} character={character} family={family} selected={target?.charId === character.id} onClick={() => onTarget(player.id, character.id)} />)}</div></div>
+  return <div className={`family-board ${active ? 'active-board' : ''}`}><div className="family-head"><div className={`family-glyph ${family.tone}`}>{family.icon}</div><div><span className="eyebrow">{player.name} · {active ? 'active fate' : 'opponent'}</span><h3>{familyName}</h3></div><div className="family-value"><span>FAMILY VALUE</span><b className={familyValue < 0 ? 'good-score' : ''}>{familyValue > 0 ? '+' : ''}{familyValue}</b></div></div><div className="character-row">{player.chars.map((character) => <CharacterCard key={character.id} character={character} family={family} selected={target?.charId === character.id} onClick={() => onTarget(player.id, character.id)} />)}</div></div>
 }
 
 function CharacterCard({ character, family, selected, onClick }) {
