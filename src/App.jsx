@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 const families = {
   castle: { name: 'Castle Slogar', icon: '☿', tone: 'violet', chars: ['Lord Slogar', 'Elias E. Gorr', 'Grogar', 'Melissa Slogar', 'Professor Helena Slogar'] },
@@ -55,8 +55,8 @@ function makeGame(playerFamily = 'castle') {
   const rivalChars = families[rivalFamily].chars.map((name, i) => living(name, rivalFamily, i))
   const deck = seededDeck()
   return {
-    turn: 1, active: 'player', plays: 0, selectedCard: null, target: null, deck: deck.slice(10), discard: deck.slice(0, 10),
-    hand: deck.slice(10, 15), log: ['The table is set. Five families wait beneath the black sky.', 'Your family: Castle Slogar. Your rival: Hemlock Hall.'],
+    turn: 1, active: 'player', plays: 0, selectedCard: null, target: null, deck: deck.slice(20), discard: deck.slice(0, 10),
+    hand: deck.slice(10, 15), rivalHand: deck.slice(15, 20), log: ['The table is set. Five families wait beneath the black sky.', 'Your family: Castle Slogar. Your rival: Hemlock Hall.'],
     players: [{ id: 'player', name: 'You', family: playerFamily, chars: playerChars }, { id: 'rival', name: 'Lady Mourning', family: rivalFamily, chars: rivalChars }],
   }
 }
@@ -76,6 +76,12 @@ function App() {
   const familyScore = (player) => player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
   const playable = selected && (selected.type === 'event' || selected.type === 'death' || selected.type === 'modifier')
 
+  useEffect(() => {
+    if (game.active !== 'rival') return undefined
+    const timer = setTimeout(runBotTurn, 650)
+    return () => clearTimeout(timer)
+  }, [game.active, game.turn])
+
   const setSelection = (card) => setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, target: null }))
   const chooseTarget = (playerId, charId) => setGame((g) => ({ ...g, target: { playerId, charId } }))
 
@@ -83,6 +89,76 @@ function App() {
     const next = { ...state, hand: [...state.hand], deck: [...state.deck], discard: [...state.discard] }
     while (next.hand.length < 5 && next.deck.length) next.hand.push(next.deck.shift())
     return next
+  }
+
+  const drawBotToLimit = (state) => {
+    const next = { ...state, rivalHand: [...state.rivalHand], deck: [...state.deck] }
+    while (next.rivalHand.length < 5 && next.deck.length) next.rivalHand.push(next.deck.shift())
+    return next
+  }
+
+  const runBotTurn = () => {
+    setGame((g) => {
+      const next = structuredClone(g)
+      const rival = next.players.find((p) => p.id === 'rival')
+      const opponent = next.players.find((p) => p.id === 'player')
+      let botHand = next.rivalHand
+
+      const removeCard = (card) => {
+        botHand = botHand.filter((candidate) => candidate.id !== card.id)
+        next.discard.push(card)
+      }
+      const livingChars = (player) => player.chars.filter((character) => character.alive)
+      const weakest = (characters) => characters.sort((a, b) => score(a) - score(b))[0]
+      const bestModifier = (card) => {
+        const own = livingChars(rival).map((character) => ({ character, value: score(character) + card.points.reduce((a, b) => a + b, 0) }))
+        const enemy = livingChars(opponent).map((character) => ({ character, value: score(character) - card.points.reduce((a, b) => a + b, 0) }))
+        const ownGain = own.sort((a, b) => b.value - a.value)[0]
+        const enemyGain = enemy.sort((a, b) => b.value - a.value)[0]
+        return card.points.reduce((a, b) => a + b, 0) >= 0 ? { ...ownGain, mode: 'own' } : { ...enemyGain, mode: 'enemy' }
+      }
+
+      for (let action = 0; action < 2 && botHand.length; action += 1) {
+        const death = botHand.find((card) => card.type === 'death' && livingChars(opponent).some((character) => score(character) < 0))
+        if (death) {
+          const target = weakest(livingChars(opponent).filter((character) => score(character) < 0))
+          target.alive = false
+          target.modifiers.push(death)
+          removeCard(death)
+          next.log.unshift(`${rival.name} sealed ${target.name}'s fate: “${death.title}”. The character is dead.`)
+          continue
+        }
+
+        const modifier = botHand.find((card) => card.type === 'modifier' && card.points.reduce((a, b) => a + b, 0) !== 0)
+        if (modifier) {
+          const choice = bestModifier(modifier)
+          if (choice?.character) {
+            choice.character.modifiers.push(modifier)
+            removeCard(modifier)
+            next.log.unshift(`${rival.name} played “${modifier.title}” on ${choice.character.name}.`)
+            continue
+          }
+        }
+
+        const event = botHand.find((card) => card.type === 'event')
+        if (event) {
+          removeCard(event)
+          next.log.unshift(`${rival.name} played Event “${event.title}”.`)
+          continue
+        }
+
+        const discard = [...botHand].sort((a, b) => (a.type === 'modifier' ? a.points.reduce((x, y) => x + y, 0) : 0) - (b.type === 'modifier' ? b.points.reduce((x, y) => x + y, 0) : 0))[0]
+        removeCard(discard)
+        next.log.unshift(`${rival.name} discarded “${discard.title}”. The rival made a quiet, regrettable choice.`)
+      }
+
+      next.rivalHand = botHand
+      next.plays = 0
+      next.turn += 1
+      next.active = 'player'
+      next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
+      return drawBotToLimit(drawToLimit(next))
+    })
   }
 
   const playSelected = () => {
