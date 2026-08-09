@@ -65,7 +65,7 @@ function seededDeck(mode = 'original') {
   return [...cardsForMode(mode)].sort((a, b) => (a.id.charCodeAt(0) * 17 + a.id.length) - (b.id.charCodeAt(0) * 13 + b.id.length))
 }
 
-function makeGame(playerFamily = 'castle', mode = 'original', botCount = 2) {
+function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
   const rivalFamilies = Object.keys(families).filter((key) => key !== playerFamily).slice(0, botCount)
   const characterSets = mode === 'thrones' ? thronesCharacters : Object.fromEntries(Object.entries(families).map(([key, family]) => [key, family.chars]))
   const playerChars = characterSets[playerFamily].map((name, i) => living(name, playerFamily, i))
@@ -92,7 +92,7 @@ function App() {
   const [chosenFamily, setChosenFamily] = useState('castle')
   const [language, setLanguage] = useState('en')
   const [mode, setMode] = useState('original')
-  const [botCount, setBotCount] = useState(2)
+  const [botCount, setBotCount] = useState(1)
   useEffect(() => {
     if (!game.active.startsWith('bot-') || screen === 'lobby') return undefined
     const timer = setTimeout(runBotTurn, 650)
@@ -312,7 +312,7 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
       <div className="lobby-panel">
         <div className="lobby-field"><span className="eyebrow">{text.mode}</span><div className="edition-picker"><button className={`edition-option ${mode === 'original' ? 'selected' : ''}`} onClick={() => onMode('original')}><strong>{text.original}</strong><small>{text.originalNote}</small></button><button className={`edition-option ${mode === 'thrones' ? 'selected' : ''}`} onClick={() => onMode('thrones')}><strong>{text.thrones}</strong><small>{text.thronesNote}</small></button></div></div>
         <div className="lobby-field"><span className="eyebrow">{text.family}</span><div className="family-picker">{Object.entries(families).map(([key, option]) => <button key={key} className={`family-option ${key === chosenFamily ? 'selected' : ''}`} onClick={() => onChooseFamily(key)}><span className={`family-glyph ${option.tone}`}>{option.icon}</span><span><strong>{mode === 'thrones' ? option.thronesName : option.name}</strong><small>{(mode === 'thrones' ? thronesCharacters[key][0] : option.chars[0])} · 5 characters</small></span></button>)}</div></div>
-        <div className="lobby-field"><span className="eyebrow">{text.bots}</span><div className="bot-picker">{[2, 3].map((count) => <button key={count} className={`bot-option ${count === botCount ? 'selected' : ''}`} onClick={() => onBotCount(count)}><strong>{count}</strong></button>)}</div></div>
+        <div className="lobby-field"><span className="eyebrow">{text.bots}</span><div className="bot-picker">{[1, 2, 3].map((count) => <button key={count} className={`bot-option ${count === botCount ? 'selected' : ''}`} onClick={() => onBotCount(count)}><strong>{count}</strong></button>)}</div></div>
         <button className="lobby-start" onClick={onStart}><span>{text.start}</span><b>→</b></button>
         <div className="lobby-footnote"><span>{text.hash} {BUILD_VERSION}</span></div>
       </div>
