@@ -50,15 +50,16 @@ function seededDeck() {
   return [...allCards].sort((a, b) => (a.id.charCodeAt(0) * 17 + a.id.length) - (b.id.charCodeAt(0) * 13 + b.id.length))
 }
 
-function makeGame(playerFamily = 'castle', mode = 'original') {
-  const rivalFamily = Object.keys(families).find((key) => key !== playerFamily) || 'hemlock'
+function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
+  const rivalFamilies = Object.keys(families).filter((key) => key !== playerFamily).slice(0, botCount)
   const playerChars = families[playerFamily].chars.map((name, i) => living(name, playerFamily, i))
-  const rivalChars = families[rivalFamily].chars.map((name, i) => living(name, rivalFamily, i))
   const deck = seededDeck()
+  const botNames = ['Lady Mourning', 'The Pale Cousin', 'Baron Nocturne']
+  const bots = rivalFamilies.map((family, index) => ({ id: `bot-${index + 1}`, name: botNames[index], family, chars: families[family].chars.map((name, i) => living(name, family, i)) }))
   return {
-    turn: 1, active: 'player', plays: 0, selectedCard: null, target: null, mode, deck: deck.slice(20), discard: deck.slice(0, 10),
-    hand: deck.slice(10, 15), rivalHand: deck.slice(15, 20), log: ['The table is set. Five families wait beneath the black sky.', 'Your family: Castle Slogar. Your rival: Hemlock Hall.'],
-    players: [{ id: 'player', name: 'You', family: playerFamily, chars: playerChars }, { id: 'rival', name: 'Lady Mourning', family: rivalFamily, chars: rivalChars }],
+    turn: 1, active: 'player', plays: 0, selectedCard: null, target: null, mode, botCount, deck: deck.slice(20), discard: deck.slice(0, 10),
+    hand: deck.slice(10, 15), botHands: Object.fromEntries(bots.map((bot, index) => [bot.id, deck.slice(15 + index * 5, 20 + index * 5)])), log: ['The table is set. Five families wait beneath the black sky.', `Your family: ${families[playerFamily].name}. ${bots.length} rival${bots.length === 1 ? '' : 's'} wait in the dark.`],
+    players: [{ id: 'player', name: 'You', family: playerFamily, chars: playerChars }, ...bots],
   }
 }
 
@@ -72,13 +73,14 @@ function App() {
   const [chosenFamily, setChosenFamily] = useState('castle')
   const [language, setLanguage] = useState('en')
   const [mode, setMode] = useState('original')
+  const [botCount, setBotCount] = useState(1)
   useEffect(() => {
-    if (game.active !== 'rival' || screen === 'lobby') return undefined
+    if (!game.active.startsWith('bot-') || screen === 'lobby') return undefined
     const timer = setTimeout(runBotTurn, 650)
     return () => clearTimeout(timer)
   }, [game.active, game.turn, screen])
   const [view, setView] = useState('table')
-  if (screen === 'lobby') return <Lobby language={language} onLanguage={setLanguage} mode={mode} onMode={setMode} chosenFamily={chosenFamily} onChooseFamily={setChosenFamily} onStart={() => { setGame(makeGame(chosenFamily, mode)); setScreen('table') }} />
+  if (screen === 'lobby') return <Lobby language={language} onLanguage={setLanguage} mode={mode} onMode={setMode} chosenFamily={chosenFamily} onChooseFamily={setChosenFamily} botCount={botCount} onBotCount={setBotCount} onStart={() => { setGame(makeGame(chosenFamily, mode, botCount)); setScreen('table') }} />
   const activePlayer = game.players.find((p) => p.id === game.active)
   const selected = game.hand.find((card) => card.id === game.selectedCard)
   const familyScore = (player) => player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
@@ -94,17 +96,17 @@ function App() {
   }
 
   const drawBotToLimit = (state) => {
-    const next = { ...state, rivalHand: [...state.rivalHand], deck: [...state.deck] }
-    while (next.rivalHand.length < 5 && next.deck.length) next.rivalHand.push(next.deck.shift())
+    const next = { ...state, botHands: Object.fromEntries(Object.entries(state.botHands).map(([id, hand]) => [id, [...hand]])), deck: [...state.deck] }
+    Object.values(next.botHands).forEach((hand) => { while (hand.length < 5 && next.deck.length) hand.push(next.deck.shift()) })
     return next
   }
 
   const runBotTurn = () => {
     setGame((g) => {
       const next = structuredClone(g)
-      const rival = next.players.find((p) => p.id === 'rival')
+      const rival = next.players.find((p) => p.id === next.active)
       const opponent = next.players.find((p) => p.id === 'player')
-      let botHand = next.rivalHand
+      let botHand = next.botHands[rival.id]
 
       const removeCard = (card) => {
         botHand = botHand.filter((candidate) => candidate.id !== card.id)
@@ -154,11 +156,18 @@ function App() {
         next.log.unshift(`${rival.name} discarded “${discard.title}”. The rival made a quiet, regrettable choice.`)
       }
 
-      next.rivalHand = botHand
+      next.botHands[rival.id] = botHand
       next.plays = 0
-      next.turn += 1
-      next.active = 'player'
-      next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
+      const botIndex = next.players.findIndex((player) => player.id === rival.id)
+      const nextBot = next.players.slice(botIndex + 1).find((player) => player.id.startsWith('bot-'))
+      if (nextBot) {
+        next.active = nextBot.id
+        next.log.unshift(`${nextBot.name} inherits the sorrow.`)
+      } else {
+        next.turn += 1
+        next.active = 'player'
+        next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
+      }
       return drawBotToLimit(drawToLimit(next))
     })
   }
@@ -186,8 +195,15 @@ function App() {
       next.plays += 1
       next.selectedCard = null; next.target = null
       if (next.plays >= 2 || selected.type === 'death') {
-        next.plays = 0; next.turn += 1; next.active = next.active === 'player' ? 'rival' : 'player'
-        next.log.unshift(`Turn ${next.turn}: ${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
+        next.plays = 0
+        if (next.active === 'player') {
+          next.active = 'bot-1'
+          next.log.unshift(`${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
+        } else {
+          next.active = 'player'
+          next.turn += 1
+          next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
+        }
         return drawToLimit(next)
       }
       return next
@@ -201,13 +217,19 @@ function App() {
       next.hand = next.hand.filter((card) => card.id !== selected.id)
       next.discard.push(selected)
       next.log.unshift(`${next.players.find((p) => p.id === next.active).name} discarded “${selected.title}”. Even the deck looked away.`)
-      next.selectedCard = null; next.target = null; next.plays = 0; next.turn += 1; next.active = next.active === 'player' ? 'rival' : 'player'
-      next.log.unshift(`Turn ${next.turn}: ${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
+      next.selectedCard = null; next.target = null; next.plays = 0
+      if (next.active === 'player') {
+        next.active = 'bot-1'
+        next.log.unshift(`${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
+      } else {
+        next.active = 'player'; next.turn += 1
+        next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
+      }
       return drawToLimit(next)
     })
   }
 
-  const reset = () => { setGame(makeGame(chosenFamily, mode)); setScreen('lobby') }
+  const reset = () => { setGame(makeGame(chosenFamily, mode, botCount)); setScreen('lobby') }
   const targetHint = selected?.type === 'death' ? 'Choose a living character with negative Self-Worth.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
 
   return <div className="app-shell">
@@ -238,8 +260,7 @@ function App() {
   </div>
 }
 
-function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamily, onStart }) {
-  const family = families[chosenFamily]
+function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamily, botCount, onBotCount, onStart }) {
   const [backgroundMode, setBackgroundMode] = useState(mode)
   const [incomingMode, setIncomingMode] = useState(null)
   const [backgroundVisible, setBackgroundVisible] = useState(false)
@@ -258,22 +279,21 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
   const backgroundUrl = (edition) => edition === 'thrones' ? '/assets/lobby-thrones.webp' : '/assets/lobby-original.webp'
   const en = language === 'en'
   const text = en ? {
-    eyebrow: 'A card game of unfortunate lives', subtitle: 'Misery loves company.', before: 'Before the sorrow begins', gather: 'Gather around the table', family: 'Choose your family', house: 'Your house', souls: 'Five unfortunate souls await their first misfortune.', players: 'Players', rival: 'you + rival', mode: 'Choose your edition', original: 'Original Gloom', originalNote: 'The classic deck', thrones: 'Gloom of Thrones', thronesNote: 'Card set coming soon', start: 'Enter the séance', prototype: 'Prototype build', lowest: 'Lowest Family Value wins', quote: '“There is no fate but what we make for ourselves.\nUnfortunately, ours is usually dreadful.”', language: 'Language', hash: 'build'
+    eyebrow: 'A card game of unfortunate lives', subtitle: 'Misery loves company.', family: 'Choose your family', bots: 'Number of bots', botSingular: 'bot', botPlural: 'bots', mode: 'Choose your edition', original: 'Original Gloom', originalNote: 'The classic deck', thrones: 'Gloom of Thrones', thronesNote: 'Card set coming soon', start: 'Enter the séance', prototype: 'Prototype build', lowest: 'Lowest Family Value wins', quote: '“There is no fate but what we make for ourselves.\nUnfortunately, ours is usually dreadful.”', hash: 'build'
   } : {
-    eyebrow: 'Карточная игра о несчастных жизнях', subtitle: 'Несчастье любит компанию.', before: 'До начала печали', gather: 'Соберитесь за столом', family: 'Выберите семью', house: 'Ваш дом', souls: 'Пять несчастных душ ждут своей первой беды.', players: 'Игроки', rival: 'вы + соперник', mode: 'Выберите издание', original: 'Оригинальный Gloom', originalNote: 'Классическая колода', thrones: 'Gloom of Thrones', thronesNote: 'Карты скоро появятся', start: 'Войти в сеанс', prototype: 'Прототип', lowest: 'Побеждает семья с меньшим значением', quote: '«Нет судьбы, кроме той, что мы создаём сами.\nК сожалению, обычно она ужасна».', language: 'Язык', hash: 'сборка'
+    eyebrow: 'Карточная игра о несчастных жизнях', subtitle: 'Несчастье любит компанию.', family: 'Выберите семью', bots: 'Число ботов', botSingular: 'бот', botPlural: 'бота', mode: 'Выберите издание', original: 'Оригинальный Gloom', originalNote: 'Классическая колода', thrones: 'Gloom of Thrones', thronesNote: 'Карты скоро появятся', start: 'Войти в сеанс', prototype: 'Прототип', lowest: 'Побеждает семья с меньшим значением', quote: '«Нет судьбы, кроме той, что мы создаём сами.\nК сожалению, обычно она ужасна».', hash: 'сборка'
   }
   return <div className="lobby-shell">
     <div className="lobby-bg" style={{ backgroundImage: `url(${backgroundUrl(backgroundMode)})` }} />
     {incomingMode && <div className={`lobby-bg lobby-bg-incoming ${backgroundVisible ? 'visible' : ''}`} style={{ backgroundImage: `url(${backgroundUrl(incomingMode)})` }} />}
     <div className="lobby-vignette" />
+    <div className="lobby-language"><button className={en ? 'selected' : ''} onClick={() => onLanguage('en')}>EN</button><button className={!en ? 'selected' : ''} onClick={() => onLanguage('ru')}>RU</button></div>
     <div className="lobby-content">
       <div className="lobby-brand"><span className="lobby-mark">✠</span><span className="eyebrow">{text.eyebrow}</span><h1>Gloom</h1><p>{text.subtitle}</p></div>
       <div className="lobby-panel">
-        <div className="lobby-panel-head"><div><span className="eyebrow">{text.before}</span><h2>{text.gather}</h2></div><span className="lobby-seal">II</span></div>
-        <div className="lobby-toolbar"><span className="eyebrow">{text.language}</span><div className="language-switch"><button className={en ? 'selected' : ''} onClick={() => onLanguage('en')}>EN</button><button className={!en ? 'selected' : ''} onClick={() => onLanguage('ru')}>RU</button></div></div>
         <div className="lobby-field"><span className="eyebrow">{text.mode}</span><div className="edition-picker"><button className={`edition-option ${mode === 'original' ? 'selected' : ''}`} onClick={() => onMode('original')}><strong>{text.original}</strong><small>{text.originalNote}</small></button><button className={`edition-option ${mode === 'thrones' ? 'selected' : ''}`} onClick={() => onMode('thrones')}><strong>{text.thrones}</strong><small>{text.thronesNote}</small></button></div></div>
         <div className="lobby-field"><span className="eyebrow">{text.family}</span><div className="family-picker">{Object.entries(families).map(([key, option]) => <button key={key} className={`family-option ${key === chosenFamily ? 'selected' : ''}`} onClick={() => onChooseFamily(key)}><span className={`family-glyph ${option.tone}`}>{option.icon}</span><span><strong>{mode === 'thrones' ? option.thronesName : option.name}</strong><small>{option.chars[0]} · {option.chars.length} characters</small></span></button>)}</div></div>
-        <div className="lobby-summary"><div className="summary-emblem"><span className={`family-glyph ${family.tone}`}>{family.icon}</span></div><div><span className="eyebrow">{text.house}</span><strong>{mode === 'thrones' ? family.thronesName : family.name}</strong><p>{text.souls}</p></div><div className="summary-count"><span className="eyebrow">{text.players}</span><strong>2</strong><small>{text.rival}</small></div></div>
+        <div className="lobby-field"><span className="eyebrow">{text.bots}</span><div className="bot-picker">{[1, 2, 3].map((count) => <button key={count} className={`bot-option ${count === botCount ? 'selected' : ''}`} onClick={() => onBotCount(count)}><strong>{count}</strong><small>{count === 1 ? text.botSingular : text.botPlural}</small></button>)}</div></div>
         <button className="lobby-start" onClick={onStart}><span>{text.start}</span><b>→</b></button>
         <div className="lobby-footnote"><span>{text.prototype} · {text.hash} {BUILD_VERSION}</span><span>{text.lowest}</span></div>
       </div>
