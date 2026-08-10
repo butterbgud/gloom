@@ -99,7 +99,8 @@ function App() {
     const timer = setTimeout(runBotTurn, 650)
     return () => clearTimeout(timer)
   }, [game.active, game.turn, screen])
-  const [view, setView] = useState('table')
+  const [showRules, setShowRules] = useState(false)
+  const [showChronicle, setShowChronicle] = useState(false)
   if (screen === 'lobby') return <Lobby language={language} onLanguage={setLanguage} mode={mode} onMode={setMode} chosenFamily={chosenFamily} onChooseFamily={setChosenFamily} botCount={botCount} onBotCount={setBotCount} onStart={() => { setGame(makeGame(chosenFamily, mode, botCount)); setScreen('table') }} />
   const activePlayer = game.players.find((p) => p.id === game.active)
   const selected = game.hand.find((card) => card.id === game.selectedCard)
@@ -262,8 +263,8 @@ function App() {
 
   return <div className="app-shell">
     <header className="topbar">
-      <div className="brand"><span className="brand-mark">✠</span><div className="header-turn"><span>TURN</span><strong>{game.turn}</strong><small>{activePlayer.name}</small></div><div className="header-plays"><span>PLAYS</span><strong>{Math.max(0, 2 - game.plays)}</strong></div></div>
-      <div className="top-actions">{bugReportStatus && <span className="bug-report-status">{bugReportStatus}</span>}<button className="ghost-button" onClick={reportBug}>Bug report</button><button className="ghost-button help-button" onClick={() => setView('rules')} aria-label="Quick rules">?</button></div>
+      <div className="brand"><span className="brand-mark">✠</span><div className="header-turn"><span>TURN</span><strong>{game.turn}</strong><small>{activePlayer.name}</small></div><div className="header-plays"><span>PLAYS</span><strong>{Math.max(0, 2 - game.plays)}</strong></div><div className="header-deck"><span>DECK</span><strong>{game.deck.length}</strong></div><div className="header-tools"><button className="header-tool" onClick={() => setShowChronicle((value) => !value)} aria-label="Chronicle">H</button><button className="header-tool" onClick={() => setShowRules(true)} aria-label="Quick rules">?</button></div></div>
+      <div className="top-actions">{bugReportStatus && <span className="bug-report-status">{bugReportStatus}</span>}<button className="ghost-button" onClick={reportBug}>Bug report</button></div>
     </header>
     <main className="layout">
       <section className="game-column">
@@ -276,12 +277,9 @@ function App() {
           {selected && <div className="card-inspector"><div className={`inspector-icon ${selected.type}`}>{selected.type === 'modifier' ? '✦' : selected.type === 'death' ? '†' : '♢'}</div><div className="inspector-copy"><span className="eyebrow">{selected.type}</span><h3>{selected.title}</h3><p>{selected.text || selected.flavor}</p>{selected.points && <div className="point-strip">{selected.points.map((point, i) => <span key={i} className={point > 0 ? 'good' : point < 0 ? 'bad' : ''}>{point ? `${point > 0 ? '+' : ''}${point}` : '—'}</span>)}</div>}</div><div className="inspector-actions"><span className="target-hint">{targetHint}</span><button className="primary-button" disabled={!playable || (selected.type !== 'event' && !game.target)} onClick={playSelected}>Play card</button><button className="ghost-button" onClick={discardSelected}>Discard</button></div></div>}
         </div>
       </section>
-      <aside className="side-column">
-        <div className="side-tabs"><button className={view === 'table' ? 'active' : ''} onClick={() => setView('table')}>Chronicle</button><button className={view === 'rules' ? 'active' : ''} onClick={() => setView('rules')}>Rules</button></div>
-        {view === 'table' ? <div className="chronicle"><div className="chronicle-title"><span className="eyebrow">The black book</span><h2>Chronicle</h2></div>{game.log.map((entry, i) => <div className={`log-entry ${i === 0 ? 'latest' : ''}`} key={`${entry}-${i}`}><span className="log-index">{String(game.log.length - i).padStart(2, '0')}</span><p>{entry}</p></div>)}</div> : <div className="rules-card"><span className="eyebrow">Quick reference</span><h2>How to suffer</h2><p>On your turn, play or discard up to two cards, then draw back to five.</p><p>Modifiers stack on living characters. Only the top visible Pathos spaces count.</p><p>Untimely Deaths are played during your first play and require negative Self-Worth.</p><p>The game ends when a family is entirely eliminated. The lowest dead-character total wins.</p></div>}
-        <div className="deck-status"><div><span className="eyebrow">Draw pile</span><strong>{game.deck.length}</strong></div><div><span className="eyebrow">Discarded</span><strong>{game.discard.length}</strong></div></div>
-      </aside>
     </main>
+    {showRules && <div className="rules-popover" role="dialog"><button className="popover-close" onClick={() => setShowRules(false)} aria-label="Close rules">×</button><span className="eyebrow">Quick reference</span><h2>How to suffer</h2><p>On your turn, play or discard up to two cards, then draw back to five.</p><p>Modifiers stack on living characters. Only the top visible Pathos spaces count.</p><p>Untimely Deaths are played during your first play and require negative Self-Worth.</p><p>The game ends when a family is entirely eliminated. The lowest dead-character total wins.</p></div>}
+    {showChronicle && <div className="chronicle-drawer"><div className="chronicle-title"><span className="eyebrow">The black book</span><h2>Chronicle</h2></div>{game.log.map((entry, i) => <div className={`log-entry ${i === 0 ? 'latest' : ''}`} key={`${entry}-${i}`}><span className="log-index">{String(game.log.length - i).padStart(2, '0')}</span><p>{entry}</p></div>)}</div>}
     <footer><span>Gloom prototype · based on the supplied 2004 rules and card list</span><span>✦ Fate is cruel. Make it count.</span></footer>
   </div>
 }
