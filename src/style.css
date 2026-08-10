@@ -36,3 +36,43 @@ button { font: inherit; color: inherit; }
 .character-card { border: 0; background: transparent; box-shadow: none; }
 .character-card:hover, .character-card.targeted { border-color: transparent; box-shadow: none; filter: drop-shadow(0 0 8px rgba(194,106,115,.42)); }
 .character-card.dead { background: transparent; }
+.portrait { width: 58px; height: 72px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.portrait img { object-fit: contain; }
+.hand-fan { height: 215px; }
+.hand-fan-card { width: 155px; }
+.hand-fan-card .hand-card { width: 155px; }
+@media (max-width: 700px) {
+  .topbar { height: 60px; padding: 0 14px; }
+  .brand h1 { font-size: 19px; }
+  .brand-mark { font-size: 24px; }
+  .top-actions { gap: 7px; font-size: 9px; }
+  .layout { padding: 14px 10px 18px; gap: 12px; }
+  .table-header { margin-bottom: 9px; }
+  .table-header h2 { font-size: 17px; }
+  .table-ribbon { padding: 8px 10px; font-size: 9px; }
+  .families-grid { gap: 5px; }
+  .family-board { padding: 9px 6px 7px; overflow: hidden; }
+  .family-head { gap: 7px; margin-bottom: 5px; }
+  .family-glyph { width: 27px; height: 27px; font-size: 15px; }
+  .family-head h3 { font-size: 12px; }
+  .family-value span { font-size: 7px; }
+  .family-value b { font-size: 17px; }
+  .character-row { gap: 1px; min-width: 490px; }
+  .character-card { min-height: 145px; padding: 4px 2px; }
+  .portrait { width: 47px; height: 58px; margin: 3px auto 3px; }
+  .character-name { min-height: 27px; font-size: 8px; }
+  .self-worth { margin-top: 4px; font-size: 7px; }
+  .self-worth strong { font-size: 10px; }
+  .modifier-stack { margin-top: 3px; gap: 1px; }
+  .modifier-stack span { padding: 2px; font-size: 6px; }
+  .hand-panel { margin-top: 10px; padding: 10px 7px; }
+  .section-heading { margin-bottom: 4px; }
+  .section-heading h2 { font-size: 16px; }
+  .section-heading .muted { font-size: 8px; }
+  .hand-fan-scroll { margin: 0 -4px; padding: 2px 4px 5px; }
+  .hand-fan { height: 176px; }
+  .hand-fan-card, .hand-fan-card .hand-card { width: 118px; }
+  .hand-fan-card .hand-card { min-height: 150px; padding: 7px; }
+  .hand-card > strong { min-height: 25px; margin-top: 7px; font-size: 9px; }
+  .hand-card small { margin-top: 5px; font-size: 7px; }
+}
