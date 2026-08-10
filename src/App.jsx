@@ -262,13 +262,11 @@ function App() {
 
   return <div className="app-shell">
     <header className="topbar">
-      <div className="brand"><span className="brand-mark">✠</span><div><span className="eyebrow">The game of inauspicious incidents</span><h1>Gloom</h1></div></div>
+      <div className="brand"><span className="brand-mark">✠</span><div className="header-turn"><span>TURN</span><strong>{game.turn}</strong><small>{activePlayer.name}</small></div><div className="header-plays"><span>PLAYS</span><strong>{Math.max(0, 2 - game.plays)}</strong></div></div>
       <div className="top-actions">{bugReportStatus && <span className="bug-report-status">{bugReportStatus}</span>}<button className="ghost-button" onClick={reportBug}>Bug report</button><button className="ghost-button help-button" onClick={() => setView('rules')} aria-label="Quick rules">?</button></div>
     </header>
     <main className="layout">
       <section className="game-column">
-        <div className="table-header"><div><span className="eyebrow">A sad little world</span><h2>House of Misfortune</h2></div><div className="turn-badge"><span>TURN</span><strong>{game.turn}</strong><small>{activePlayer.name}'s hand</small></div></div>
-        <div className="table-ribbon"><span><b>Lowest Family Value wins</b> · All visible Pathos counts only after death.</span><span className="plays">Plays remaining <b>{Math.max(0, 2 - game.plays)}</b></span></div>
         <div className="families-grid">
           {game.players.map((player) => <FamilyBoard key={player.id} player={player} mode={game.mode} active={player.id === game.active} target={game.target} onTarget={chooseTarget} />)}
         </div>
@@ -339,7 +337,7 @@ function FamilyBoard({ player, mode, active, target, onTarget }) {
 
 function CharacterCard({ character, family, selected, onClick }) {
   const total = score(character)
-  return <button className={`character-card ${character.alive ? '' : 'dead'} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className={`character-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}><span>VALUE</span><strong>{total > 0 ? '+' : ''}{total}</strong></div><div className="portrait">{character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>}</div><div className="modifier-stack">{character.modifiers.slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.title}</span>)}{character.modifiers.length > 3 && <span>+{character.modifiers.length - 3} more</span>}</div></button>
+  return <button className={`character-card ${character.alive ? '' : 'dead'} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className={`character-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}><strong>{total > 0 ? '+' : ''}{total}</strong></div><div className="portrait">{character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>}</div><div className="modifier-stack">{character.modifiers.slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.title}</span>)}{character.modifiers.length > 3 && <span>+{character.modifiers.length - 3} more</span>}</div></button>
 }
 
 function HandCard({ card, selected, onClick }) {
