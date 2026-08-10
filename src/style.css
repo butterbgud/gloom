@@ -28,3 +28,11 @@ button { font: inherit; color: inherit; }
 .bot-option small { font-size: 9px; }
 .lobby-brand p { margin-bottom: 24px; }
 .portrait img { width: 100%; height: 100%; object-fit: cover; }
+.hand-fan-scroll { overflow-x: auto; overflow-y: hidden; padding: 4px 8px 8px; }
+.hand-fan { position: relative; height: 225px; min-width: 170px; margin: 0 auto; }
+.hand-fan-card { position: absolute; bottom: 0; width: 170px; transform-origin: bottom center; transition: transform .18s ease, z-index 0s; }
+.hand-fan-card .hand-card { width: 170px; min-height: 190px; }
+.hand-fan-card:hover { z-index: 90 !important; transform: translateY(-14px) scale(1.05) !important; }
+.character-card { border: 0; background: transparent; box-shadow: none; }
+.character-card:hover, .character-card.targeted { border-color: transparent; box-shadow: none; filter: drop-shadow(0 0 8px rgba(194,106,115,.42)); }
+.character-card.dead { background: transparent; }
