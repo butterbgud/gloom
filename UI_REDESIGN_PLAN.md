@@ -16,6 +16,7 @@ the hand at the bottom and both player and opponent character rows.
 - [x] (2026-08-10 17:15 Europe/Tallinn) Added the OHSP-style overlapping hand fan with rotation, selection lift, and narrow-screen scrolling.
 - [x] (2026-08-10 17:15 Europe/Tallinn) Removed character-card border squares while retaining hover/target glow.
 - [x] (2026-08-10 17:18 Europe/Tallinn) Tightened the mobile layout, removed portrait circles and living labels, and made the fan more visible at phone widths.
+- [x] (2026-08-10 17:26 Europe/Tallinn) Simplified the header and quick rules, added Gloom-tagged bug-report copying, removed character names, and enlarged character art.
 - [ ] Build, inspect the diff, commit, and push.
 
 ## Surprises & Discoveries
@@ -42,7 +43,8 @@ the hand at the bottom and both player and opponent character rows.
 
 The second UI pass is complete and the production build passes. Mobile rules
 now reduce board, character, portrait, and hand-card dimensions; the remaining
-validation is the final Git commit.
+validation is the final Git commit. The latest pass intentionally makes the
+portrait art larger while hiding duplicate printed names.
 
 ## Context and Orientation
 

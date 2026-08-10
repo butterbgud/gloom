@@ -76,3 +76,12 @@ button { font: inherit; color: inherit; }
   .hand-card > strong { min-height: 25px; margin-top: 7px; font-size: 9px; }
   .hand-card small { margin-top: 5px; font-size: 7px; }
 }
+.portrait { width: 112px; height: 142px; margin: 5px auto 8px; }
+.character-card { min-height: 260px; }
+.character-name { display: none; }
+.bug-report-status { color: #9cc4a4; font: 9px 'Cinzel', serif; letter-spacing: .05em; }
+.help-button { min-width: 29px; padding-left: 8px; padding-right: 8px; font-size: 15px; }
+@media (max-width: 700px) {
+  .character-card { min-height: 220px; }
+  .portrait { width: 94px; height: 116px; margin: 3px auto 5px; }
+}

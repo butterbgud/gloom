@@ -93,6 +93,7 @@ function App() {
   const [language, setLanguage] = useState('en')
   const [mode, setMode] = useState('original')
   const [botCount, setBotCount] = useState(1)
+  const [bugReportStatus, setBugReportStatus] = useState('')
   useEffect(() => {
     if (!game.active.startsWith('bot-') || screen === 'lobby') return undefined
     const timer = setTimeout(runBotTurn, 650)
@@ -249,12 +250,20 @@ function App() {
   }
 
   const reset = () => { setGame(makeGame(chosenFamily, mode, botCount)); setScreen('lobby') }
+  const reportBug = async () => {
+    const description = window.prompt('What went wrong?')
+    if (!description?.trim()) return
+    const report = `[GLOOM BUG REPORT]\nGame: Gloom original prototype\nTurn: ${game.turn}\nActive: ${activePlayer.name}\nDescription: ${description.trim()}`
+    try { await navigator.clipboard?.writeText(report) } catch {}
+    setBugReportStatus('Gloom bug report copied')
+    window.setTimeout(() => setBugReportStatus(''), 3500)
+  }
   const targetHint = selected?.type === 'death' ? 'Choose a living character with negative Self-Worth.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
 
   return <div className="app-shell">
     <header className="topbar">
       <div className="brand"><span className="brand-mark">✠</span><div><span className="eyebrow">The game of inauspicious incidents</span><h1>Gloom</h1></div></div>
-      <div className="top-actions"><span className="status-dot" /> <span>prototype table</span><button className="ghost-button" onClick={reset}>New fate</button></div>
+      <div className="top-actions">{bugReportStatus && <span className="bug-report-status">{bugReportStatus}</span>}<button className="ghost-button" onClick={reportBug}>Bug report</button><button className="ghost-button help-button" onClick={() => setView('rules')} aria-label="Quick rules">?</button></div>
     </header>
     <main className="layout">
       <section className="game-column">
@@ -271,7 +280,7 @@ function App() {
       </section>
       <aside className="side-column">
         <div className="side-tabs"><button className={view === 'table' ? 'active' : ''} onClick={() => setView('table')}>Chronicle</button><button className={view === 'rules' ? 'active' : ''} onClick={() => setView('rules')}>Rules</button></div>
-        {view === 'table' ? <div className="chronicle"><div className="chronicle-title"><span className="eyebrow">The black book</span><h2>Chronicle</h2></div>{game.log.map((entry, i) => <div className={`log-entry ${i === 0 ? 'latest' : ''}`} key={`${entry}-${i}`}><span className="log-index">{String(game.log.length - i).padStart(2, '0')}</span><p>{entry}</p></div>)}</div> : <div className="rules-card"><span className="eyebrow">Quick reference</span><h2>How to suffer</h2><p>On your turn, play or discard up to two cards, then draw back to five.</p><p>Modifiers stack on living characters. Only the top visible Pathos spaces count.</p><p>Untimely Deaths are played during your first play and require negative Self-Worth.</p><p>The game ends when a family is entirely eliminated. The lowest dead-character total wins.</p><div className="family-key">{Object.values(families).map((family) => <div key={family.name}><span className={`family-glyph ${family.tone}`}>{family.icon}</span>{family.name}</div>)}</div></div>}
+        {view === 'table' ? <div className="chronicle"><div className="chronicle-title"><span className="eyebrow">The black book</span><h2>Chronicle</h2></div>{game.log.map((entry, i) => <div className={`log-entry ${i === 0 ? 'latest' : ''}`} key={`${entry}-${i}`}><span className="log-index">{String(game.log.length - i).padStart(2, '0')}</span><p>{entry}</p></div>)}</div> : <div className="rules-card"><span className="eyebrow">Quick reference</span><h2>How to suffer</h2><p>On your turn, play or discard up to two cards, then draw back to five.</p><p>Modifiers stack on living characters. Only the top visible Pathos spaces count.</p><p>Untimely Deaths are played during your first play and require negative Self-Worth.</p><p>The game ends when a family is entirely eliminated. The lowest dead-character total wins.</p></div>}
         <div className="deck-status"><div><span className="eyebrow">Draw pile</span><strong>{game.deck.length}</strong></div><div><span className="eyebrow">Discarded</span><strong>{game.discard.length}</strong></div></div>
       </aside>
     </main>
@@ -330,7 +339,7 @@ function FamilyBoard({ player, mode, active, target, onTarget }) {
 
 function CharacterCard({ character, family, selected, onClick }) {
   const total = score(character)
-  return <button className={`character-card ${character.alive ? '' : 'dead'} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className="character-top"><span className={`tiny-glyph ${family.tone}`}>{family.icon}</span></div><div className="portrait">{character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>}</div><div className="character-name">{character.name}</div><div className={`self-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}>{character.alive ? 'Self-Worth' : 'Final Pathos'} <strong>{total > 0 ? '+' : ''}{total}</strong></div><div className="modifier-stack">{character.modifiers.slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.title}</span>)}{character.modifiers.length > 3 && <span>+{character.modifiers.length - 3} more</span>}</div></button>
+  return <button className={`character-card ${character.alive ? '' : 'dead'} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className="character-top"><span className={`tiny-glyph ${family.tone}`}>{family.icon}</span></div><div className="portrait">{character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>}</div><div className={`self-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}>{character.alive ? 'Self-Worth' : 'Final Pathos'} <strong>{total > 0 ? '+' : ''}{total}</strong></div><div className="modifier-stack">{character.modifiers.slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.title}</span>)}{character.modifiers.length > 3 && <span>+{character.modifiers.length - 3} more</span>}</div></button>
 }
 
 function HandCard({ card, selected, onClick }) {
