@@ -108,7 +108,11 @@ function App() {
   const playable = selected && (selected.type === 'event' || selected.type === 'death' || selected.type === 'modifier')
 
   const setSelection = (card) => setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, target: null }))
-  const chooseTarget = (playerId, charId) => setGame((g) => ({ ...g, target: { playerId, charId } }))
+  const canTargetCharacter = (character) => Boolean(selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || score(character) < 0))
+  const chooseTarget = (playerId, charId) => setGame((g) => {
+    const character = g.players.find((player) => player.id === playerId)?.chars.find((candidate) => candidate.id === charId)
+    return character && canTargetCharacter(character) ? { ...g, target: { playerId, charId } } : g
+  })
 
   const drawToLimit = (state) => {
     const next = { ...state, hand: [...state.hand], deck: [...state.deck], discard: [...state.discard] }
@@ -269,12 +273,12 @@ function App() {
     <main className="layout">
       <section className="game-column">
         <div className="families-grid">
-          {game.players.map((player) => <FamilyBoard key={player.id} player={player} mode={game.mode} active={player.id === game.active} target={game.target} onTarget={chooseTarget} />)}
+          {game.players.map((player) => <FamilyBoard key={player.id} player={player} mode={game.mode} active={player.id === game.active} target={game.target} onTarget={chooseTarget} targetable={canTargetCharacter} />)}
         </div>
         <div className="hand-panel">
           <div className="section-heading"><div><span className="eyebrow">Your hand · {game.hand.length} / 5</span><h2>Cards held close</h2></div><span className="muted">Click a card to inspect and play</span></div>
           <div className="hand-fan-scroll"><div className="hand-fan" style={{ width: `${game.hand.length ? (typeof window !== 'undefined' && window.innerWidth <= 700 ? 118 : 155) + (game.hand.length <= 1 ? 0 : (typeof window !== 'undefined' && window.innerWidth <= 700 ? 55 : 96)) * (game.hand.length - 1) : 0}px` }}>{game.hand.map((card, index) => { const compactHand = typeof window !== 'undefined' && window.innerWidth <= 700; const step = game.hand.length <= 1 ? 0 : compactHand ? 55 : 96; const rotation = game.hand.length <= 1 ? 0 : (index / (game.hand.length - 1) - .5) * 24; const selected = game.selectedCard === card.id; return <div className="hand-fan-card" key={card.id} style={{ left: `${index * step}px`, zIndex: selected ? 100 : index, transform: `rotate(${rotation}deg) translateY(${selected ? -12 : 0}px) scale(${selected ? 1.05 : 1})` }}><HandCard card={card} selected={selected} onClick={() => setSelection(card)} /></div> })}</div></div>
-          {selected && <div className="card-inspector"><div className={`inspector-icon ${selected.type}`}>{selected.type === 'modifier' ? '✦' : selected.type === 'death' ? '†' : '♢'}</div><div className="inspector-copy"><span className="eyebrow">{selected.type}</span><h3>{selected.title}</h3><p>{selected.text || selected.flavor}</p>{selected.points && <div className="point-strip">{selected.points.map((point, i) => <span key={i} className={point > 0 ? 'good' : point < 0 ? 'bad' : ''}>{point ? `${point > 0 ? '+' : ''}${point}` : '—'}</span>)}</div>}</div><div className="inspector-actions"><span className="target-hint">{targetHint}</span><button className="primary-button" disabled={!playable || (selected.type !== 'event' && !game.target)} onClick={playSelected}>Play card</button><button className="ghost-button" onClick={discardSelected}>Discard</button></div></div>}
+          {selected && <div className={`card-inspector ${selected.asset ? 'asset-inspector' : ''}`}>{selected.asset ? <img className="inspector-card-art" src={selected.asset} alt={selected.title} /> : <><div className={`inspector-icon ${selected.type}`}>{selected.type === 'modifier' ? '✦' : selected.type === 'death' ? '†' : '♢'}</div><div className="inspector-copy"><span className="eyebrow">{selected.type}</span><h3>{selected.title}</h3><p>{selected.text || selected.flavor}</p>{selected.points && <div className="point-strip">{selected.points.map((point, i) => <span key={i} className={point > 0 ? 'good' : point < 0 ? 'bad' : ''}>{point ? `${point > 0 ? '+' : ''}${point}` : '—'}</span>)}</div>}</div></>}<div className="inspector-actions"><span className="target-hint">{targetHint}</span><button className="primary-button" disabled={!playable || (selected.type !== 'event' && !game.target)} onClick={playSelected}>Play</button><button className="ghost-button" onClick={discardSelected}>Discard</button></div></div>}
         </div>
       </section>
     </main>
@@ -326,21 +330,21 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
   </div>
 }
 
-function FamilyBoard({ player, mode, active, target, onTarget }) {
+function FamilyBoard({ player, mode, active, target, onTarget, targetable }) {
   const family = families[player.family]
   const familyName = mode === 'thrones' ? family.thronesName : family.name
   const familyValue = player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
-  return <div className={`family-board ${active ? 'active-board' : ''}`}><div className="family-head"><div className={`family-glyph ${family.tone}`}>{family.icon}</div><div><span className="eyebrow">{player.name} · {active ? 'active fate' : 'opponent'}</span><h3>{familyName}</h3></div><div className="family-value"><span>FAMILY VALUE</span><b className={familyValue < 0 ? 'good-score' : ''}>{familyValue > 0 ? '+' : ''}{familyValue}</b></div></div><div className="character-row">{player.chars.map((character) => <CharacterCard key={character.id} character={character} family={family} selected={target?.charId === character.id} onClick={() => onTarget(player.id, character.id)} />)}</div></div>
+  return <div className={`family-board ${active ? 'active-board' : ''}`}><div className="family-head"><div className={`family-glyph ${family.tone}`}>{family.icon}</div><div><span className="eyebrow">{player.name} · {active ? 'active fate' : 'opponent'}</span><h3>{familyName}</h3></div><div className="family-value"><span>FAMILY VALUE</span><b className={familyValue < 0 ? 'good-score' : ''}>{familyValue > 0 ? '+' : ''}{familyValue}</b></div></div><div className="character-row">{player.chars.map((character) => <CharacterCard key={character.id} character={character} family={family} selected={target?.charId === character.id} targetable={targetable(character)} onClick={() => onTarget(player.id, character.id)} />)}</div></div>
 }
 
-function CharacterCard({ character, family, selected, onClick }) {
+function CharacterCard({ character, family, selected, targetable, onClick }) {
   const total = score(character)
-  return <button className={`character-card ${character.alive ? '' : 'dead'} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className={`character-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}><strong>{total > 0 ? '+' : ''}{total}</strong></div><div className="portrait">{character.alive ? character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span> : <img src="/assets/dead.webp" alt={`${character.name} dead`} />}</div><div className="modifier-stack">{character.modifiers.slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.asset && <img src={modifier.asset} alt="" />}{modifier.title}</span>)}{character.modifiers.length > 3 && <span>+{character.modifiers.length - 3} more</span>}</div></button>
+  return <button className={`character-card ${character.alive ? '' : 'dead'} ${targetable ? 'targetable' : ''} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className={`character-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}><strong>{total > 0 ? '+' : ''}{total}</strong></div><div className="portrait">{character.alive ? character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span> : <img src="/assets/dead.webp" alt={`${character.name} dead`} />}</div><div className="modifier-stack">{character.modifiers.slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.asset && <img src={modifier.asset} alt="" />}{modifier.title}</span>)}{character.modifiers.length > 3 && <span>+{character.modifiers.length - 3} more</span>}</div></button>
 }
 
 function HandCard({ card, selected, onClick }) {
   const typeLabel = card.type === 'modifier' ? 'MODIFIER' : card.type === 'death' ? 'UNTIMELY DEATH' : 'EVENT'
-  return <button onClick={onClick} className={`hand-card ${card.type} ${selected ? 'selected' : ''}`}>{card.asset && <img className="hand-card-art" src={card.asset} alt="" />}<div className="hand-card-top"><span>{typeLabel}</span><b>{card.type === 'modifier' ? '✦' : card.type === 'death' ? '†' : '♢'}</b></div><strong>{card.title}</strong>{card.points && <div className="mini-points">{card.points.map((p, i) => <span key={i} className={p < 0 ? 'bad' : p > 0 ? 'good' : ''}>{p || '—'}</span>)}</div>}<small>{card.text || card.flavor}</small></button>
+  return <button onClick={onClick} className={`hand-card ${card.type} ${card.asset ? 'asset-card' : ''} ${selected ? 'selected' : ''}`}>{card.asset && <img className="hand-card-art" src={card.asset} alt={card.title} />}{!card.asset && <><div className="hand-card-top"><span>{typeLabel}</span><b>{card.type === 'modifier' ? '✦' : card.type === 'death' ? '†' : '♢'}</b></div><strong>{card.title}</strong>{card.points && <div className="mini-points">{card.points.map((p, i) => <span key={i} className={p < 0 ? 'bad' : p > 0 ? 'good' : ''}>{p || '—'}</span>)}</div>}<small>{card.text || card.flavor}</small></>}</button>
 }
 
 export default App

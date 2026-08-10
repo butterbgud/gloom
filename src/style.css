@@ -137,3 +137,10 @@ button { font: inherit; color: inherit; }
   .rules-popover { top: 67px; left: 10px; width: calc(100vw - 20px); }
   .chronicle-drawer { right: 10px; bottom: 10px; width: calc(100vw - 20px); }
 }
+.hand-card.asset-card { padding: 0; overflow: hidden; }
+.hand-card.asset-card .hand-card-art { width: 100%; height: 100%; min-height: 190px; margin: 0; object-fit: cover; }
+.character-card.targetable { filter: drop-shadow(0 0 7px rgba(194, 106, 115, .78)); }
+.character-card.targetable:hover, .character-card.targetable.targeted { filter: drop-shadow(0 0 12px rgba(235, 142, 150, .98)); }
+.asset-inspector { flex-wrap: wrap; justify-content: center; }
+.inspector-card-art { width: min(260px, 100%); max-height: 330px; object-fit: contain; border: 1px solid #86505b; box-shadow: 0 12px 28px #08070b; }
+.asset-inspector .inspector-actions { flex: 1 1 140px; }
