@@ -103,6 +103,10 @@ button { font: inherit; color: inherit; }
   .character-worth { min-height: 18px; padding: 0 2px; }
   .character-worth strong { font-size: 12px; }
 }
+.modifier-stack span { display: inline-flex; align-items: center; gap: 3px; }
+.modifier-stack img { width: 16px; height: 22px; flex: 0 0 auto; object-fit: cover; }
+.hand-card-art { display: block; width: calc(100% + 22px); height: 88px; margin: -11px -11px 8px; object-fit: cover; object-position: top; }
+@media (max-width: 700px) { .hand-card-art { width: calc(100% + 14px); height: 58px; margin: -7px -7px 5px; } }
 .header-turn, .header-plays { display: flex; align-items: baseline; gap: 6px; }
 .header-turn span, .header-plays span { color: #897780; font: 8px 'Cinzel', serif; letter-spacing: .13em; }
 .header-turn strong { color: #dfabb0; font: 700 25px 'Cinzel', serif; }

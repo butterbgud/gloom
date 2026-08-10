@@ -29,7 +29,7 @@ const deaths = [
   ['was torn limb from limb', 'Rest in pieces.'], ['was consumed from within', 'What a way to waste away.'], ['never returned', 'Good riddance.'],
   ['was burnt by a mob', "Fifty people with torches can't be wrong."], ['drank too much rye', 'The remains are already pickled.'], ['drowned in a bog', 'Still waters run deep.'],
   ['was badly burned', 'Fire warms the heart… and other vital organs.'], ['was overcome with measles', 'X marks the spots.'],
-].map(([title, flavor], index) => ({ id: `death-${index}`, type: 'death', title, flavor, pathos: 0 }))
+].map(([title, flavor], index) => ({ id: `death-${index}`, type: 'death', title, flavor, asset: index < 15 ? `/assets/death-d${index + 1}.webp` : null, pathos: 0 }))
 
 const events = [
   ['Body Thief', 'Remove one of your living characters and one dead character from play.'], ['A Tragic Misunderstanding', 'Swap the top modifiers on two living characters.'], ['To Be or Not To Be', 'Move one Untimely Death from a dead character to a living character with negative Self-Worth.'],
@@ -54,7 +54,7 @@ const modifierSeed = [
   ['was put into prison', -20, 0, 0, 'none'], ['was trapped on a train', -20, 0, 0, 'none'], ['fell down a well', -10, 0, 0, 'none'], ['was cursed by the queen', 0, -15, -20, 'none'],
   ['was mocked by midgets', -10, 0, 0, 'none'], ['was the toast of the town', 0, 15, 0, 'none'], ['was chastised by the church', -10, 0, -15, 'none'],
 ]
-const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) => ({ id: `modifier-${index}`, type: 'modifier', title, points: [top, middle, bottom], icon, flavor: 'A fresh misfortune takes root.' }))
+const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) => ({ id: `modifier-${index}`, type: 'modifier', title, points: [top, middle, bottom], icon, asset: index < 25 ? `/assets/m${index + 1}.webp` : null, flavor: 'A fresh misfortune takes root.' }))
 
 const allCards = [...modifiers, ...events, ...deaths]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
@@ -335,12 +335,12 @@ function FamilyBoard({ player, mode, active, target, onTarget }) {
 
 function CharacterCard({ character, family, selected, onClick }) {
   const total = score(character)
-  return <button className={`character-card ${character.alive ? '' : 'dead'} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className={`character-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}><strong>{total > 0 ? '+' : ''}{total}</strong></div><div className="portrait">{character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>}</div><div className="modifier-stack">{character.modifiers.slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.title}</span>)}{character.modifiers.length > 3 && <span>+{character.modifiers.length - 3} more</span>}</div></button>
+  return <button className={`character-card ${character.alive ? '' : 'dead'} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className={`character-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}><strong>{total > 0 ? '+' : ''}{total}</strong></div><div className="portrait">{character.alive ? character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span> : <img src="/assets/dead.webp" alt={`${character.name} dead`} />}</div><div className="modifier-stack">{character.modifiers.slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.asset && <img src={modifier.asset} alt="" />}{modifier.title}</span>)}{character.modifiers.length > 3 && <span>+{character.modifiers.length - 3} more</span>}</div></button>
 }
 
 function HandCard({ card, selected, onClick }) {
   const typeLabel = card.type === 'modifier' ? 'MODIFIER' : card.type === 'death' ? 'UNTIMELY DEATH' : 'EVENT'
-  return <button onClick={onClick} className={`hand-card ${card.type} ${selected ? 'selected' : ''}`}><div className="hand-card-top"><span>{typeLabel}</span><b>{card.type === 'modifier' ? '✦' : card.type === 'death' ? '†' : '♢'}</b></div><strong>{card.title}</strong>{card.points && <div className="mini-points">{card.points.map((p, i) => <span key={i} className={p < 0 ? 'bad' : p > 0 ? 'good' : ''}>{p || '—'}</span>)}</div>}<small>{card.text || card.flavor}</small></button>
+  return <button onClick={onClick} className={`hand-card ${card.type} ${selected ? 'selected' : ''}`}>{card.asset && <img className="hand-card-art" src={card.asset} alt="" />}<div className="hand-card-top"><span>{typeLabel}</span><b>{card.type === 'modifier' ? '✦' : card.type === 'death' ? '†' : '♢'}</b></div><strong>{card.title}</strong>{card.points && <div className="mini-points">{card.points.map((p, i) => <span key={i} className={p < 0 ? 'bad' : p > 0 ? 'good' : ''}>{p || '—'}</span>)}</div>}<small>{card.text || card.flavor}</small></button>
 }
 
 export default App
