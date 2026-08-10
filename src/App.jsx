@@ -56,7 +56,7 @@ const modifierSeed = [
 ]
 const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) => {
   const number = index + 1
-  const asset = number === 25 ? '/assets/modifier-m25.webp' : number <= 54 ? `/assets/m${number}.webp` : null
+  const asset = number <= 54 ? `/assets/m${number}.webp` : null
   return { id: `modifier-${index}`, type: 'modifier', title, points: [top, middle, bottom], icon, asset, flavor: 'A fresh misfortune takes root.' }
 })
 
