@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react'
 const families = {
   castle: { name: 'Castle Slogar', thronesName: 'House Snark', icon: '☿', tone: 'violet', portraits: ['s1.webp', 's2.webp', 's3.webp', 's4.webp', 's5.webp'], chars: ['Lord Slogar', 'Elias E. Gorr', 'Grogar', 'Melissa Slogar', 'Professor Helena Slogar'] },
   hemlock: { name: 'Hemlock Hall', thronesName: 'House Bannister', icon: '♠', tone: 'amber', portraits: ['h1.webp', 'h2.webp', 'h3.webp', 'h4.webp', 'h5.webp'], chars: ['Goody Zarr', 'Lola Wellington-Smythe', 'The Twins', 'Lord Wellington-Smythe', 'Butterfield'] },
-  blackwater: { name: 'Blackwater Watch', thronesName: "Kelly's Dragons", icon: '†', tone: 'blue', chars: ['Angel', 'Balthazar', 'The Old Dam', 'Cousin Mordecai', 'Willem Stark'] },
-  darks: { name: "Dark's Den of Deformity", thronesName: 'Brotherhood Without Pants', icon: '✣', tone: 'crimson', chars: ['Darius Dark', 'Elissandre DeVille', 'Thumbelisa', "Samson O'Toole", 'Mister Giggles'] },
+  blackwater: { name: 'Blackwater Watch', thronesName: "Kelly's Dragons", icon: '†', tone: 'blue', portraits: ['b1.webp', 'b2.webp', 'b3.webp', 'b4.webp', 'b5.webp'], chars: ['Angel', 'Balthazar', 'The Old Dam', 'Cousin Mordecai', 'Willem Stark'] },
+  darks: { name: "Dark's Den of Deformity", thronesName: 'Brotherhood Without Pants', icon: '✣', tone: 'crimson', portraits: ['d1.webp', 'd2.webp', 'd3.webp', 'd4.webp', 'd5.webp'], chars: ['Darius Dark', 'Elissandre DeVille', 'Thumbelisa', "Samson O'Toole", 'Mister Giggles'] },
 }
 
 const thronesCharacters = {
