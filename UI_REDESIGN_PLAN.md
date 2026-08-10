@@ -17,6 +17,7 @@ the hand at the bottom and both player and opponent character rows.
 - [x] (2026-08-10 17:15 Europe/Tallinn) Removed character-card border squares while retaining hover/target glow.
 - [x] (2026-08-10 17:18 Europe/Tallinn) Tightened the mobile layout, removed portrait circles and living labels, and made the fan more visible at phone widths.
 - [x] (2026-08-10 17:26 Europe/Tallinn) Simplified the header and quick rules, added Gloom-tagged bug-report copying, removed character names, and enlarged character art.
+- [x] (2026-08-10 17:34 Europe/Tallinn) Replaced character family symbols with Self-Worth totals and added overlapping hover/target zoom.
 - [ ] Build, inspect the diff, commit, and push.
 
 ## Surprises & Discoveries
