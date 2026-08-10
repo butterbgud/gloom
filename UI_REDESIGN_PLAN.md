@@ -20,6 +20,7 @@ the hand at the bottom and both player and opponent character rows.
 - [x] (2026-08-10 17:34 Europe/Tallinn) Replaced character family symbols with Self-Worth totals and added overlapping hover/target zoom.
 - [x] (2026-08-10 17:40 Europe/Tallinn) Moved Turn and Plays to the top-left, removed redundant table copy, and tightened mobile character overlap.
 - [x] (2026-08-10 17:46 Europe/Tallinn) Moved Draw Pile to the header, removed the sidebar, and added hidden-by-default H Chronicle and ? Rules overlays.
+- [x] (2026-08-10 17:50 Europe/Tallinn) Shortened the bug control to B, tightened the active family frame, and reduced hand-fan spacing for desktop and mobile.
 - [ ] Build, inspect the diff, commit, and push.
 
 ## Surprises & Discoveries
