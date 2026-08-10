@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 
 const families = {
-  castle: { name: 'Castle Slogar', thronesName: 'House Snark', icon: '☿', tone: 'violet', chars: ['Lord Slogar', 'Elias E. Gorr', 'Grogar', 'Melissa Slogar', 'Professor Helena Slogar'] },
-  hemlock: { name: 'Hemlock Hall', thronesName: 'House Bannister', icon: '♠', tone: 'amber', chars: ['Goody Zarr', 'Lola Wellington-Smythe', 'The Twins', 'Lord Wellington-Smythe', 'Butterfield'] },
+  castle: { name: 'Castle Slogar', thronesName: 'House Snark', icon: '☿', tone: 'violet', portraits: ['s1.webp', 's2.webp', 's3.webp', 's4.webp', 's5.webp'], chars: ['Lord Slogar', 'Elias E. Gorr', 'Grogar', 'Melissa Slogar', 'Professor Helena Slogar'] },
+  hemlock: { name: 'Hemlock Hall', thronesName: 'House Bannister', icon: '♠', tone: 'amber', portraits: ['h1.webp', 'h2.webp', 'h3.webp', 'h4.webp', 'h5.webp'], chars: ['Goody Zarr', 'Lola Wellington-Smythe', 'The Twins', 'Lord Wellington-Smythe', 'Butterfield'] },
   blackwater: { name: 'Blackwater Watch', thronesName: "Kelly's Dragons", icon: '†', tone: 'blue', chars: ['Angel', 'Balthazar', 'The Old Dam', 'Cousin Mordecai', 'Willem Stark'] },
   darks: { name: "Dark's Den of Deformity", thronesName: 'Brotherhood Without Pants', icon: '✣', tone: 'crimson', chars: ['Darius Dark', 'Elissandre DeVille', 'Thumbelisa', "Samson O'Toole", 'Mister Giggles'] },
 }
@@ -59,7 +59,7 @@ const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) =
 const allCards = [...modifiers, ...events, ...deaths]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
-const living = (name, family, index) => ({ id: `${family}-${index}`, name, family, alive: true, modifiers: [], pathos: 0 })
+const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
 
 function seededDeck(mode = 'original') {
   return [...cardsForMode(mode)].sort((a, b) => (a.id.charCodeAt(0) * 17 + a.id.length) - (b.id.charCodeAt(0) * 13 + b.id.length))
@@ -68,10 +68,10 @@ function seededDeck(mode = 'original') {
 function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
   const rivalFamilies = Object.keys(families).filter((key) => key !== playerFamily).slice(0, botCount)
   const characterSets = mode === 'thrones' ? thronesCharacters : Object.fromEntries(Object.entries(families).map(([key, family]) => [key, family.chars]))
-  const playerChars = characterSets[playerFamily].map((name, i) => living(name, playerFamily, i))
+  const playerChars = characterSets[playerFamily].map((name, i) => living(name, playerFamily, i, mode === 'original' ? families[playerFamily].portraits?.[i] : null))
   const deck = seededDeck(mode)
   const botNames = ['Lady Mourning', 'The Pale Cousin', 'Baron Nocturne']
-  const bots = rivalFamilies.map((family, index) => ({ id: `bot-${index + 1}`, name: botNames[index], family, chars: characterSets[family].map((name, i) => living(name, family, i)) }))
+  const bots = rivalFamilies.map((family, index) => ({ id: `bot-${index + 1}`, name: botNames[index], family, chars: characterSets[family].map((name, i) => living(name, family, i, mode === 'original' ? families[family].portraits?.[i] : null)) }))
   const handStart = 5
   const botHandStart = handStart
   const deckStart = botHandStart + botCount * 5
@@ -330,7 +330,7 @@ function FamilyBoard({ player, mode, active, target, onTarget }) {
 
 function CharacterCard({ character, family, selected, onClick }) {
   const total = score(character)
-  return <button className={`character-card ${character.alive ? '' : 'dead'} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className="character-top"><span className={`tiny-glyph ${family.tone}`}>{family.icon}</span><span className="character-state">{character.alive ? 'LIVING' : 'DECEASED'}</span></div><div className="portrait"><span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span></div><div className="character-name">{character.name}</div><div className={`self-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}>{character.alive ? 'Self-Worth' : 'Final Pathos'} <strong>{total > 0 ? '+' : ''}{total}</strong></div><div className="modifier-stack">{character.modifiers.slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.title}</span>)}{character.modifiers.length > 3 && <span>+{character.modifiers.length - 3} more</span>}</div></button>
+  return <button className={`character-card ${character.alive ? '' : 'dead'} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className="character-top"><span className={`tiny-glyph ${family.tone}`}>{family.icon}</span><span className="character-state">{character.alive ? 'LIVING' : 'DECEASED'}</span></div><div className="portrait">{character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>}</div><div className="character-name">{character.name}</div><div className={`self-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}>{character.alive ? 'Self-Worth' : 'Final Pathos'} <strong>{total > 0 ? '+' : ''}{total}</strong></div><div className="modifier-stack">{character.modifiers.slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.title}</span>)}{character.modifiers.length > 3 && <span>+{character.modifiers.length - 3} more</span>}</div></button>
 }
 
 function HandCard({ card, selected, onClick }) {

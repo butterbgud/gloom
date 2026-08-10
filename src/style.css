@@ -27,3 +27,4 @@ button { font: inherit; color: inherit; }
 .bot-option strong { color: #e2d3c7; font: 600 18px 'Cinzel', serif; }
 .bot-option small { font-size: 9px; }
 .lobby-brand p { margin-bottom: 24px; }
+.portrait img { width: 100%; height: 100%; object-fit: cover; }
