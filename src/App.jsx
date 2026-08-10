@@ -29,14 +29,14 @@ const deaths = [
   ['was torn limb from limb', 'Rest in pieces.'], ['was consumed from within', 'What a way to waste away.'], ['never returned', 'Good riddance.'],
   ['was burnt by a mob', "Fifty people with torches can't be wrong."], ['drank too much rye', 'The remains are already pickled.'], ['drowned in a bog', 'Still waters run deep.'],
   ['was badly burned', 'Fire warms the heart… and other vital organs.'], ['was overcome with measles', 'X marks the spots.'],
-].map(([title, flavor], index) => ({ id: `death-${index}`, type: 'death', title, flavor, asset: index < 15 ? `/assets/death-d${index + 1}.webp` : null, pathos: 0 }))
+].map(([title, flavor], index) => ({ id: `death-${index}`, type: 'death', title, flavor, asset: index < 19 ? `/assets/death-d${index + 1}.webp` : null, pathos: 0 }))
 
 const events = [
   ['Body Thief', 'Remove one of your living characters and one dead character from play.'], ['A Tragic Misunderstanding', 'Swap the top modifiers on two living characters.'], ['To Be or Not To Be', 'Move one Untimely Death from a dead character to a living character with negative Self-Worth.'],
   ['A Stormy Night', 'Draw four cards, play one, then discard down to your draw limit.'], ['The Root of All Evil', "Steal a card from each opponent's hand and play what you wish."], ['A Second Chance', 'Cancel an Untimely Death as it is played, or remove one from a character.'],
   ['Misfortune Favors the Old', 'Play two additional negative cards this round.'], ['Til Death Do Us Part', 'Play an Untimely Death on any character with the heart icon.'], ['Smoke and Mirrors', 'Cancel an Event as it is played.'],
   ['Twist of Fate', 'Replace a character’s top Modifier with one from your hand.'], ['A Chance to Begin Again', 'Discard all Modifiers from one living character.'], ['An Unpleasant Surprise', 'Remove the top Modifier from one living character.'],
-].map(([title, text], index) => ({ id: `event-${index}`, type: 'event', title, text, pathos: 0 }))
+].map(([title, text], index) => ({ id: `event-${index}`, type: 'event', title, text, asset: index < 11 ? `/assets/event-e${index + 1}.webp` : null, pathos: 0 }))
 
 const modifierSeed = [
   ['was blessed by a Bishop', 0, 0, 20, 'heart'], ['found love on the lake', 0, 0, 15, 'heart'], ['was married magnificently', 0, 0, 15, 'heart'], ['was wondrously well wed', 0, 0, 20, 'heart'],
@@ -54,7 +54,11 @@ const modifierSeed = [
   ['was put into prison', -20, 0, 0, 'none'], ['was trapped on a train', -20, 0, 0, 'none'], ['fell down a well', -10, 0, 0, 'none'], ['was cursed by the queen', 0, -15, -20, 'none'],
   ['was mocked by midgets', -10, 0, 0, 'none'], ['was the toast of the town', 0, 15, 0, 'none'], ['was chastised by the church', -10, 0, -15, 'none'],
 ]
-const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) => ({ id: `modifier-${index}`, type: 'modifier', title, points: [top, middle, bottom], icon, asset: index < 25 ? `/assets/m${index + 1}.webp` : null, flavor: 'A fresh misfortune takes root.' }))
+const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) => {
+  const number = index + 1
+  const asset = number === 25 ? '/assets/modifier-m25.webp' : number <= 54 ? `/assets/m${number}.webp` : null
+  return { id: `modifier-${index}`, type: 'modifier', title, points: [top, middle, bottom], icon, asset, flavor: 'A fresh misfortune takes root.' }
+})
 
 const allCards = [...modifiers, ...events, ...deaths]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
