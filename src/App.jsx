@@ -313,7 +313,7 @@ function applyModifierAbility(state, modifier, actorId, targetCharacter = null) 
   const giveToPrevious = (count) => { const taken = hand.splice(0, Math.min(count, hand.length)); if (previousHand) previousHand.push(...taken) }
   switch (modifier.ability) {
     case 'discardHand': state.discard.push(...hand.splice(0)); state.endTurnAfterAbility = true; break
-    case 'skipDraw': state.skipDraw[actorId] = true; break
+    case 'skipDraw': state.skipDraw = { ...state.skipDraw, [actorId]: true }; state.log.unshift(`${actorId === 'player' ? 'Your family' : 'The rival'} will skip its next draw phase.`); break
     case 'skipTurn': state.skipTurn[actorId] = true; break
     case 'heartOnly': modifier.cannotOn = 'heart'; break
     case 'drawTwo': draw(2); break
@@ -409,7 +409,7 @@ function App() {
 
   const drawToLimit = (state) => {
     const next = { ...state, hand: [...state.hand], deck: [...state.deck], discard: [...state.discard] }
-    if (next.skipDraw?.player) { next.skipDraw = { ...next.skipDraw, player: false }; return next }
+    if (next.skipDraw?.player) { next.skipDraw = { ...next.skipDraw, player: false }; next.log.unshift('Your family skipped its draw phase.'); return next }
     while (next.hand.length < modifierDrawLimit(next, 'player') && next.deck.length) next.hand.push(next.deck.shift())
     return next
   }
@@ -417,7 +417,7 @@ function App() {
   const drawBotToLimit = (state) => {
     const next = { ...state, botHands: Object.fromEntries(Object.entries(state.botHands).map(([id, hand]) => [id, [...hand]])), deck: [...state.deck] }
     Object.entries(next.botHands).forEach(([id, hand]) => {
-      if (next.skipDraw?.[id]) { next.skipDraw[id] = false; return }
+      if (next.skipDraw?.[id]) { next.skipDraw[id] = false; next.log.unshift(`${next.players.find((player) => player.id === id)?.name || 'A rival'} skipped its draw phase.`); return }
       while (hand.length < modifierDrawLimit(next, id) && next.deck.length) hand.push(next.deck.shift())
     })
     return next
