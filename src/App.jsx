@@ -140,7 +140,7 @@ const visibleIcon = (character) => character.modifiers.reduce((icon, card) => {
   if (card.icon === 'blank') return null
   return card.icon && card.icon !== 'none' ? card.icon : icon
 }, null)
-const canPlayDeathOn = (character, death = null) => Boolean(character?.alive && sumPoints(visiblePoints(character)) < 0 && (!death?.cannotOn || visibleIcon(character) !== death.cannotOn))
+const canPlayDeathOn = (character, death = null, heartOverride = false) => Boolean(character?.alive && ((heartOverride && visibleIcon(character) === 'heart') || sumPoints(visiblePoints(character)) < 0) && (!death?.cannotOn || visibleIcon(character) !== death.cannotOn))
 const deathBonus = (character, death = [...character.modifiers].reverse().find((card) => card.type === 'death')) => death?.bonusSymbols?.includes(visibleIcon(character)) ? -10 : 0
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
 const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
@@ -170,7 +170,7 @@ function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
   const botHandStart = handStart
   const deckStart = botHandStart + botCount * 5
   return {
-    turn: 1, active: 'player', plays: 0, selectedCard: null, targeting: false, target: null, mode, botCount, deck: deck.slice(deckStart), discard: [],
+    turn: 1, active: 'player', plays: 0, playLimit: 2, heartDeathOverride: false, selectedCard: null, targeting: false, target: null, mode, botCount, deck: deck.slice(deckStart), discard: [],
     hand: deck.slice(0, handStart), botHands: Object.fromEntries(bots.map((bot, index) => [bot.id, deck.slice(botHandStart + index * 5, botHandStart + (index + 1) * 5)])), log: ['The table is set. Five families wait beneath the black sky.', `Your family: ${mode === 'thrones' ? families[playerFamily].thronesName : families[playerFamily].name}. ${bots.length} rival${bots.length === 1 ? '' : 's'} wait in the dark.`],
     players, gameOver: false, winnerId: null, pendingEvent: null,
     history: [{ turn: 1, values: Object.fromEntries(players.map((player) => [player.id, familyValue(player)])) }],
@@ -201,6 +201,83 @@ function familyValue(player) {
     if (death?.clearsNegative) return total
     return total + sumPoints(visiblePoints(character)) + deathBonus(character, death)
   }, 0)
+}
+
+function applyEventEffect(state, card, actorId) {
+  const actor = state.players.find((player) => player.id === actorId)
+  if (!actor) return state
+  const livingChars = (player) => player.chars.filter((character) => character.alive)
+  const deadChars = (player) => player.chars.filter((character) => !character.alive)
+  const firstModifier = (character) => [...character.modifiers].reverse().find((modifier) => modifier.type === 'modifier')
+  const removeModifier = (character, modifier) => { const index = character.modifiers.findIndex((candidate) => candidate.id === modifier.id); if (index >= 0) character.modifiers.splice(index, 1) }
+  const hand = actorId === 'player' ? state.hand : state.botHands[actorId]
+  const putInHand = (cards) => { if (actorId === 'player') state.hand.push(...cards); else state.botHands[actorId].push(...cards) }
+  const removeFromHand = (card) => { const index = hand.findIndex((candidate) => candidate.id === card.id); if (index >= 0) hand.splice(index, 1) }
+
+  switch (card.title) {
+    case 'Body Thief': {
+      const living = livingChars(actor); const dead = deadChars(actor)
+      if (living.length && dead.length) { actor.chars.splice(actor.chars.indexOf(living[0]), 1); actor.chars.splice(actor.chars.indexOf(dead[0]), 1) }
+      break
+    }
+    case 'A Tragic Misunderstanding': {
+      const targets = livingChars(actor).filter((character) => firstModifier(character))
+      if (targets.length >= 2) { const a = firstModifier(targets[0]); const b = firstModifier(targets[1]); removeModifier(targets[0], a); removeModifier(targets[1], b); targets[0].modifiers.push(b); targets[1].modifiers.push(a) }
+      break
+    }
+    case 'To Be or Not To Be': {
+      const source = deadChars(actor).find((character) => character.modifiers.some((modifier) => modifier.type === 'death'))
+      const target = livingChars(actor).find((character) => score(character) < 0)
+      const death = source && [...source.modifiers].reverse().find((modifier) => modifier.type === 'death')
+      if (source && target && death) { removeModifier(source, death); target.modifiers.push(death) }
+      break
+    }
+    case 'A Stormy Night': {
+      const drawn = []
+      while (drawn.length < 4 && state.deck.length) drawn.push(state.deck.shift())
+      putInHand(drawn)
+      const playable = hand.find((candidate) => candidate.type === 'modifier' && livingChars(actor).length)
+      if (playable) { const target = [...livingChars(actor)].sort((a, b) => score(a) - score(b))[0]; target.modifiers.push(playable); removeFromHand(playable); state.discard.push(playable) }
+      while (hand.length > 5) state.discard.push(hand.pop())
+      break
+    }
+    case 'The Root of All Evil': {
+      state.players.filter((player) => player.id !== actorId && player.id.startsWith('bot-')).forEach((opponent) => { const opponentHand = state.botHands[opponent.id]; if (opponentHand?.length) putInHand(opponentHand.shift()) })
+      break
+    }
+    case 'A Second Chance': {
+      const target = deadChars(actor).find((character) => character.modifiers.some((modifier) => modifier.type === 'death'))
+      const death = target && [...target.modifiers].reverse().find((modifier) => modifier.type === 'death')
+      if (target && death) { removeModifier(target, death); target.alive = true }
+      break
+    }
+    case 'Misfortune Favors the Old':
+      state.playLimit = (state.playLimit || 2) + 2
+      break
+    case 'Til Death Do Us Part':
+      state.heartDeathOverride = true
+      break
+    case 'Twist of Fate': {
+      const replacement = hand.find((candidate) => candidate.type === 'modifier')
+      const target = livingChars(actor).find((character) => firstModifier(character))
+      const old = target && firstModifier(target)
+      if (replacement && target && old) { removeModifier(target, old); removeFromHand(replacement); target.modifiers.push(replacement); state.discard.push(old) }
+      break
+    }
+    case 'A Chance to Begin Again': {
+      const target = livingChars(actor)[0]
+      if (target) { state.discard.push(...target.modifiers); target.modifiers = [] }
+      break
+    }
+    case 'An Unpleasant Surprise': {
+      const target = livingChars(actor)[0]
+      const modifier = target && firstModifier(target)
+      if (target && modifier) { removeModifier(target, modifier); state.discard.push(modifier) }
+      break
+    }
+    default: break
+  }
+  return state
 }
 
 function finalizeGame(state) {
@@ -251,7 +328,7 @@ function App() {
   const setSelection = (card) => {
     setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, targeting: false, target: null }))
   }
-  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || canPlayDeathOn(character, selected)))
+  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || canPlayDeathOn(character, selected, game.heartDeathOverride)))
   const chooseTarget = (playerId, charId) => {
     const character = game.players.find((player) => player.id === playerId)?.chars.find((candidate) => candidate.id === charId)
     if (!character || !canTargetCharacter(character)) return
@@ -347,6 +424,8 @@ function App() {
       next.botHands[rival.id] = botHand
       if (next.pendingEvent) return next
       next.plays = 0
+      next.playLimit = 2
+      next.heartDeathOverride = false
       const botIndex = next.players.findIndex((player) => player.id === rival.id)
       const nextBot = next.players.slice(botIndex + 1).find((player) => player.id.startsWith('bot-'))
       if (nextBot) {
@@ -374,7 +453,7 @@ function App() {
       const target = targetRef ? next.players.find((p) => p.id === targetRef.playerId)?.chars.find((c) => c.id === targetRef.charId) : null
       const actor = next.players.find((p) => p.id === next.active)
       if (selected.type === 'modifier' && (!target || !target.alive)) return g
-      if (selected.type === 'death' && !canPlayDeathOn(target, selected)) return g
+      if (selected.type === 'death' && !canPlayDeathOn(target, selected, next.heartDeathOverride)) return g
       next.hand = next.hand.filter((card) => card.id !== selected.id)
       if (selected.type === 'modifier') {
         target.modifiers.push(selected)
@@ -384,6 +463,7 @@ function App() {
         target.modifiers.push(selected)
         next.log.unshift(`${actor.name} sealed ${target.name}'s fate: “${selected.title}”. The character is dead.`)
       } else {
+        applyEventEffect(next, selected, actor.id)
         next.log.unshift(`${actor.name} played Event “${selected.title}”. ${selected.text}`)
       }
       next.discard.push(selected)
@@ -403,8 +483,10 @@ function App() {
       }
       next.plays += 1
       next.selectedCard = null; next.targeting = false; next.target = null
-      if (next.plays >= 2) {
+      if (next.plays >= (next.playLimit || 2)) {
         next.plays = 0
+        next.playLimit = 2
+        next.heartDeathOverride = false
         if (next.active === 'player') {
           next.active = 'bot-1'
           next.log.unshift(`${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
@@ -429,6 +511,8 @@ function App() {
       next.selectedCard = null; next.targeting = false; next.target = null; next.plays += 1
       if (next.plays >= 2) {
         next.plays = 0
+        next.playLimit = 2
+        next.heartDeathOverride = false
         next.active = 'bot-1'
         next.log.unshift(`${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
         return finalizeGame(drawToLimit(next))
@@ -443,7 +527,10 @@ function App() {
       const next = structuredClone(g)
       const { card, actorId } = next.pendingEvent
       next.pendingEvent = null
+      applyEventEffect(next, card, actorId)
       next.plays = 0
+      next.playLimit = 2
+      next.heartDeathOverride = false
       next.active = 'player'
       next.turn += 1
       next.log.unshift(`Event “${card.title}” resolves for ${next.players.find((p) => p.id === actorId)?.name || 'the table'}.`)
@@ -462,6 +549,8 @@ function App() {
       next.log.unshift(`You canceled Event “${next.pendingEvent.card.title}” with “${cancelCard.title}”.`)
       next.pendingEvent = null
       next.plays = 0
+      next.playLimit = 2
+      next.heartDeathOverride = false
       next.active = 'player'
       next.turn += 1
       next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
@@ -474,6 +563,8 @@ function App() {
     setGame((g) => {
       const next = structuredClone(g)
       next.plays = 0
+      next.playLimit = 2
+      next.heartDeathOverride = false
       next.selectedCard = null; next.targeting = false; next.target = null
       next.active = 'bot-1'
       next.log.unshift(`${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
@@ -494,7 +585,7 @@ function App() {
 
   return <div className="app-shell">
     <header className="topbar">
-      <div className="brand"><span className="brand-mark">✠</span><div className="header-turn"><span>TURN</span><strong>{game.turn}</strong><small>{activePlayer.name}</small></div><div className="header-plays"><span>PLAYS</span><strong>{Math.max(0, 2 - game.plays)}</strong></div><div className="header-deck"><span>DECK</span><strong>{game.deck.length}</strong></div><div className="header-tools"><button className="header-tool" onClick={() => setShowChronicle((value) => !value)} aria-label="Chronicle">H</button><button className="header-tool" onClick={() => setShowRules(true)} aria-label="Quick rules">?</button></div></div>
+      <div className="brand"><span className="brand-mark">✠</span><div className="header-turn"><span>TURN</span><strong>{game.turn}</strong><small>{activePlayer.name}</small></div><div className="header-plays"><span>PLAYS</span><strong>{Math.max(0, (game.playLimit || 2) - game.plays)}</strong></div><div className="header-deck"><span>DECK</span><strong>{game.deck.length}</strong></div><div className="header-tools"><button className="header-tool" onClick={() => setShowChronicle((value) => !value)} aria-label="Chronicle">H</button><button className="header-tool" onClick={() => setShowRules(true)} aria-label="Quick rules">?</button></div></div>
       <div className="top-actions">{bugReportStatus && <span className="bug-report-status">{bugReportStatus}</span>}<button className="ghost-button bug-button" onClick={reportBug} aria-label="Report bug">B</button></div>
     </header>
     {game.pendingEvent && <div className="event-announcement" role="dialog" aria-live="assertive"><span className="eyebrow">Untimely Event</span><HandCard card={game.pendingEvent.card} selected /><strong>{game.pendingEvent.card.title}</strong><small>{game.pendingEvent.card.text}</small>{game.hand.some((card) => card.type === 'event' && card.title === 'Smoke and Mirrors') && <button className="primary-button" onClick={cancelPendingEvent}>Cancel with Smoke and Mirrors</button>}<small className="event-countdown">The event resolves in five seconds.</small></div>}
