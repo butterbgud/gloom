@@ -452,12 +452,20 @@ function App() {
         const value = (character) => card.points.reduce((total, point, index) => total + (point > 0 ? visiblePoints(character)[index] : 0), 0)
         return value(b) - value(a) || score(b) - score(a)
       })[0]
+      const guaranteesOwnWin = (death) => livingChars(rival).some((character) => {
+        const simulation = structuredClone(next)
+        const simulatedBot = simulation.players.find((player) => player.id === rival.id)
+        const target = simulatedBot.chars.find((candidate) => candidate.id === character.id)
+        target.alive = false
+        target.modifiers.push(death)
+        return simulatedBot.chars.every((candidate) => !candidate.alive) && simulation.players.every((player) => player.id === rival.id || familyValue(simulatedBot) < familyValue(player))
+      })
 
       for (let action = 0; action < 2 && botHand.length; action += 1) {
         const deathCards = botHand.filter((card) => card.type === 'death')
         // Untimely Deaths are first-action plays. Bots should use them on their
         // own most negative eligible character before discarding excess Deaths.
-        const ownDeath = action === 0 && deathCards.find((card) => livingChars(rival).some((character) => canPlayDeathOn(character, card)))
+        const ownDeath = action === 0 && deathCards.find((card) => (!isPointNullifyingDeath(card) || guaranteesOwnWin(card)) && livingChars(rival).some((character) => canPlayDeathOn(character, card)))
         const opponentDeath = action === 0 && !ownDeath && deathCards.find((card) => isPointNullifyingDeath(card) && livingChars(opponent).some((character) => canPlayDeathOn(character, card)))
         const death = ownDeath || opponentDeath
         if (death) {
