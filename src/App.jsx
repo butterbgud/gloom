@@ -29,7 +29,16 @@ const deaths = [
   ['was torn limb from limb', 'Rest in pieces.'], ['was consumed from within', 'What a way to waste away.'], ['never returned', 'Good riddance.'],
   ['was burnt by a mob', "Fifty people with torches can't be wrong."], ['drank too much rye', 'The remains are already pickled.'], ['drowned in a bog', 'Still waters run deep.'],
   ['was badly burned', 'Fire warms the heart… and other vital organs.'], ['was overcome with measles', 'X marks the spots.'],
-].map(([title, flavor], index) => ({ id: `death-${index}`, type: 'death', title, flavor, asset: index < 19 ? `/assets/death-d${index + 1}.webp` : null, pathos: 0 }))
+]
+const deathAssets = {
+  'ran out of air': 'death-d1.webp', 'fell from on high': 'death-d7.webp', 'was eaten by bears': 'death-d6.webp',
+  'was baked into a pie': 'death-d10.webp', 'died of despair': 'death-d13.webp', 'was slain by an heir': 'death-d9.webp',
+  'was devoured by weasels': 'death-d3.webp', 'was choked by a tie': 'death-d18.webp', 'died old and alone': 'death-d5.webp',
+  'was pushed down the stairs': 'death-d11.webp', 'choked on a bone': 'death-d2.webp', 'was torn limb from limb': 'death-d17.webp',
+  'was consumed from within': 'death-d4.webp', 'never returned': 'death-d14.webp', 'was burnt by a mob': 'death-d19.webp',
+  'was badly burned': 'death-d16.webp', 'was overcome with measles': 'death-d12.webp'
+}
+const deathsWithAssets = deaths.map(([title, flavor], index) => ({ id: `death-${index}`, type: 'death', title, flavor, asset: deathAssets[title] ? `/assets/${deathAssets[title]}` : null, pathos: 0 }))
 
 const events = [
   ['Body Thief', 'Remove one of your living characters and one dead character from play.'], ['A Tragic Misunderstanding', 'Swap the top modifiers on two living characters.'], ['To Be or Not To Be', 'Move one Untimely Death from a dead character to a living character with negative Self-Worth.'],
@@ -60,7 +69,7 @@ const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) =
   return { id: `modifier-${index}`, type: 'modifier', title, points: [top, middle, bottom], icon, asset, flavor: 'A fresh misfortune takes root.' }
 })
 
-const allCards = [...modifiers, ...events, ...deaths]
+const allCards = [...modifiers, ...events, ...deathsWithAssets]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
 const isPointNullifyingDeath = (card) => card.type === 'death' && card.title === 'died without cares'
 const canPlayDeathOn = (character) => Boolean(character?.alive && score(character) < 0)
