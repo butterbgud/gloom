@@ -61,62 +61,65 @@ open for transcription or correction.
 
 | # | Card title | Top | Middle | Bottom | Icon | Ability / notes | Asset |
 |---:|---|---:|---:|---:|---|---|
-| 1 | was blessed by a Bishop | 0 | 0 | +20 | Heart |  `m1.webp` |
-| 2 | found love on the lake | 0 | 0 | +15 | Heart |  `m2.webp` |
-| 3 | was married magnificently | 0 | 0 | +15 | Heart |  `m3.webp` |
-| 4 | was wondrously well wed | 0 | 0 | +20 | Heart |  `m4.webp` |
-| 5 | was delighted by ducklings | +10 | 0 | 0 | Duck |  `m5.webp` |
-| 6 | was crippled by creditors | 0 | -20 | 0 | Coin |  `m6.webp` |
-| 7 | was written out of the will | 0 | -20 | 0 | Coin |  `m7.webp` |
-| 8 | was clever at cards | +15 | 0 | 0 | Coin |  `m8.webp` |
-| 9 | was swindled by a salesman | 0 | -10 | 0 | Coin |  `m9.webp` |
-| 10 | landed a legacy | 0 | +15 | 0 | Coin |  `m10.webp` |
-| 11 | stole from a stiff | 0 | 0 | -15 | Coin |  `m11.webp` |
-| 12 | was perturbed by pudding | -5 | -5 | 0 | Goblet |  `m12.webp` |
-| 13 | found maggots in the meat | -15 | 0 | 0 | Goblet |  `m13.webp` |
-| 14 | was ruined by rum | -15 | 0 | -10 | Goblet |  `m14.webp` |
-| 15 | found fame at a feast | 0 | +10 | 0 | Goblet |  `m15.webp` |
-| 16 | was sickened by salmon | 0 | -10 | 0 | Goblet |  `m16.webp` |
-| 17 | was diverted by drink | +10 | 0 | 0 | Goblet |  `m17.webp` |
-| 18 | was driven to drink | -15 | 0 | 0 | Goblet |  `m18.webp` |
-| 19 | starved in a storm | -10 | -10 | 0 | Goblet |  `m19.webp` |
-| 20 | was plagued by the pox | -15 | -15 | 0 | Skull |  `m20.webp` |
-| 21 | was distressed by dysentery | -15 | -10 | 0 | Skull |  `m21.webp` |
-| 22 | was greeted by ghosts | -10 | 0 | -20 | Skull |  `m22.webp` |
-| 23 | was hunted by horrors | 0 | -20 | -20 | Skull |  `m23.webp` |
-| 24 | was galled by gangrene | -15 | 0 | 0 | Skull |  `m24.webp` |
-| 25 | was jinxed by gypsies | -15 | -15 | 0 | Skull |  `m25.webp` |
-| 26 | was pestered by poltergeists | 0 | -10 | -10 | Skull |  `m26.webp` |
-| 27 | grew old without grace | -20 | 0 | 0 | Skull |  `m27.webp` |
-| 28 | contracted consumption | -15 | 0 | -15 | Skull |  `m28.webp` |
-| 29 | went mildly mad | -10 | 0 | 0 | Skull |  `m29.webp` |
-| 30 | was burdened by boils | 0 | 0 | -10 | Skull |  `m30.webp` |
-| 31 | suffered from sores | -15 | 0 | -15 | Skull |  `m31.webp` |
-| 32 | was mauled by a manatee | -20 | 0 | 0 | Bat |  `m32.webp` |
-| 33 | was taunted by tigers | -20 | -10 | 0 | Bat |  `m33.webp` |
-| 34 | was pierced by porcupines | -10 | -5 | 0 | Bat |  `m34.webp` |
-| 35 | was marooned on the moors | -10 | 0 | 0 | Bat |  `m35.webp` |
-| 36 | was terrified by topiary | -20 | 0 | 0 | Bat |  `m36.webp` |
-| 37 | was charmed by the circus | +10 | 0 | 0 | Bat |  `m37.webp` |
-| 38 | was wounded by wasps | 0 | -15 | 0 | Bat |  `m38.webp` |
-| 39 | was startled by snakes | -10 | -10 | 0 | Bat |  `m39.webp` |
-| 40 | was pursued by poodles | -15 | 0 | 0 | Bat |  `m40.webp` |
-| 41 | was menaced by mice | 0 | -15 | 0 | Bat |  `m41.webp` |
-| 42 | was popular in parliament | 0 | +15 | 0 | None |  `m42.webp` |
-| 43 | had a picnic in the park | +10 | +5 | 0 | None |  `m43.webp` |
-| 44 | was chased by children | -10 | 0 | 0 | None |  `m44.webp` |
-| 45 | was scarred by scandals | 0 | -25 | 0 | None |  `m45.webp` |
-| 46 | was beaten by beggars | -15 | 0 | 0 | None |  `m46.webp` |
-| 47 | was shunned by society | -15 | -15 | -15 | None |  `m47.webp` |
-| 48 | broke many bones | -20 | 0 | 0 | None |  `m48.webp` |
-| 49 | was put into prison | -20 | 0 | 0 | None |  `m49.webp` |
-| 50 | was trapped on a train | -20 | 0 | 0 | None |  `m50.webp` |
-| 51 | fell down a well | -10 | 0 | 0 | None |  `m51.webp` |
-| 52 | was cursed by the queen | 0 | -15 | -20 | None |  `m52.webp` |
-| 53 | was mocked by midgets | -10 | 0 | 0 | None |  `m53.webp` |
-| 54 | was the toast of the town | 0 | +15 | 0 | None |  `m54.webp` |
-| 55 | was chastised by the church | -10 | 0 | -15 | None |  `—` |
 
+| 21 | was distressed by dysentery | -15 | -10 | - | Skull |  `m1.webp` |
+| 58 | was disgraced at the dance| -| -20 | - | blank|  `m2.webp` |
+| 3 | was married magnificently | - | - | +15 | Heart |  `m3.webp` |
+| 43 | had a picnic in the park | +10 | +5 | - | None |  `m3.webp` |
+| 52 | was cursed by the queen | - | -15 | -20 | None |  `m4.webp` |
+| 48 | broke many bones | -20 | - | - | None |  `m5.webp` |
+| 29 | went mildly mad | -10 | - | - | Skull |  `m6.webp` |
+| 30 | was burdened by boils | - | - | -10 | Skull |  `m7.webp` |
+| 7 | was written out of the will | - | -20 | - | Coin |  `m7.webp` |
+| 4 | was wondrously well wed | 0 | - | +20 | Heart |  `m8.webp` |
+| 8 | was clever at cards | +15 | - | - | Coin |  `m8.webp` |
+| 12 | was perturbed by pudding | -5 | -5 | - | Goblet |  `m9.webp` |
+| 9 | was swindled by a salesman | - | -10 | - | Coin |  `m10.webp` |
+| 34 | was pierced by porcupines | -10 | -5 | - | Bat |  `m11.webp` |
+| 17 | was diverted by drink | +10 | - | - | Goblet |  `m12.webp` |
+| 13 | found maggots in the meat | -15 | - | - | Goblet |  `m13.webp` |
+| 25 | was jinxed by gypsies | -15 | -15 | - | Skull |  `m13.webp` |
+| 33 | was taunted by tigers | -20 | -10 | - | Bat |  `m14.webp` |
+| 35 | was marooned on the moors | -10 | - | - | Bat |  `m16.webp` |
+| 57 | was widowed at the wedding| -| - | -25 | None |  `m18.webp` |
+| 38 | was wounded by wasps | - | -15 | - | Bat |  `m19.webp` |
+| 24 | was galled by gangrene | -15 | - | - | Skull |  `m20.webp` |
+| 36 | was terrified by topiary | -20 | - | - | Bat |  `m21.webp` |
+| 27 | grew old without grace | -20 | - | - | Skull |  `m22.webp` |
+| 16 | was sickened by salmon | - | -10 | - | Goblet |  `m23.webp` |
+| 37 | was charmed by the circus | +10 | - | - | Bat |  `m24.webp` |
+| 44 | was chased by children | -10 | - | - | None |  `m25.webp` |
+| 26 | was pestered by poltergeists | - | -10 | -10 | Skull |  `m26.webp` |
+| 40 | was pursued by poodles | -15 | - | - | Bat |  `m27.webp` |
+| 14 | was ruined by rum | -15 | - | -10 | Goblet |  `m28.webp` |
+| 45 | was scarred by scandals | - | -25 | - | None |  `m29.webp` |
+| 2 | found love on the lake | 0 | +15 | - | Heart |  `m30.webp` |
+| 55 | was chastised by the church | -10 | - | -15 | blank |  `m31.webp` |
+| 1 | was blessed by a Bishop | 0 | +20 | - | Heart |  `m32.webp` |
+| 50 | was trapped on a train | -20 | - | - | Skull |  `m33.webp` |
+| 56 | slept without sorrows | -| +10 | - | None |  `m34.webp` |
+| 28 | contracted consumption | -15 | - | -15 | Skull |  `m35.webp` |
+| 6 | was crippled by creditors | - | -20 | - | Coin |  `m36.webp` |
+| 54 | was the toast of the town | - | +15 | - | None |  `m37.webp` |
+| 22 | was greeted by ghosts | -10 | - | -20 | Skull |  `m38.webp` |
+| 10 | landed a legacy | - | +15 | - | Coin |  `m39.webp` |
+| 39 | was startled by snakes | -10 | -10 | - | Bat |  `m39.webp` |
+| 46 | was beaten by beggars | -15 | - | - | None |  `m40.webp` |
+| 15 | found fame at a feast | 0 | +10 | - | Goblet |  `m41.webp` |
+| 18 | was driven to drink | -15 | - | - | Goblet |  `m43.webp` |
+| 53 | was mocked by midgets | -10 | - | - | None |  `m44.webp` |
+| 41 | was menaced by mice | - | -15 | - | Bat |  `m45.webp` |
+| 5 | was delighted by ducklings | +10 | 0 | - | Duck |  `m46.webp` |
+| 20 | was plagued by the pox | -15 | -15 | - | Skull |  `m47.webp` |
+| 23 | was hunted by horrors | - | -20 | -20 | Skull |  `m48.webp` |
+| 32 | was mauled by a manatee | -20 | - | - | Bat |  `m49.webp` |
+| 49 | was put into prison | -20 | - | - | None |  `m49.webp` |
+| 19 | starved in a storm | -10 | -10 | - | Goblet |  `m50.webp` |
+| 42 | was popular in parliament | - | +15 | - | None |  `m51.webp` |
+| 51 | fell down a well | -10 | - | - | None |  `m51.webp` |
+| 31 | suffered from sores | -15 | - | -15 | Skull |  `m52.webp` |
+| 11 | stole from a stiff | - | - | -15 | Coin |  `m53.webp` |
+| 47 | was shunned by society | -15 | -15 | -15 | None |  `m54.webp` |
 ## Event cards
 
 | # | Card title | Ability / effect | Asset |
