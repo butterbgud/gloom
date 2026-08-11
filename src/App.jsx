@@ -32,7 +32,7 @@ const deaths = [
 ]
 const deathAssets = {
   'ran out of air': 'death-d1.webp', 'fell from on high': 'death-d7.webp', 'was eaten by bears': 'death-d6.webp',
-  'was baked into a pie': 'death-d10.webp', 'died of despair': 'death-d13.webp', 'was slain by an heir': 'death-d9.webp',
+  'was baked into a pie': 'death-d10.webp', 'died of despair': 'death-d13.webp', 'was slain by an heir': 'death-d8.webp',
   'was devoured by weasels': 'death-d3.webp', 'was choked by a tie': 'death-d18.webp', 'died old and alone': 'death-d5.webp',
   'was pushed down the stairs': 'death-d11.webp', 'choked on a bone': 'death-d2.webp', 'was torn limb from limb': 'death-d17.webp',
   'was consumed from within': 'death-d4.webp', 'never returned': 'death-d14.webp', 'was burnt by a mob': 'death-d19.webp',
