@@ -41,13 +41,13 @@ const deathAssets = {
 }
 const deathRules = {
   'fell from on high': { bonusSymbols: ['skull'] }, 'was eaten by bears': { bonusSymbols: ['bat'] },
-  'was baked into a pie': { bonusSymbols: ['goblet'] }, 'died of despair': { extraScore: -15, discardHand: true },
+  'was baked into a pie': { bonusSymbols: ['goblet'] }, 'died of despair': { points: [null, null, -15], discardHand: true },
   'was slain by an heir': { bonusSymbols: ['coin', 'heart'] }, 'was devoured by weasels': { bonusSymbols: ['bat'] },
-  'was choked by a tie': { bonusSymbols: ['skull'] }, 'died old and alone': { extraScore: -15, cannotOn: 'heart' },
+  'was choked by a tie': { bonusSymbols: ['skull'] }, 'died old and alone': { points: [-15, null, null], cannotOn: 'heart' },
   'was pushed down the stairs': { bonusSymbols: ['coin', 'bat'] }, 'choked on a bone': { bonusSymbols: ['goblet'] },
-  'was torn limb from limb': { extraScore: 0, pointOverride: [10, 0, null] }, 'was consumed from within': { bonusSymbols: ['skull'] },
+  'was torn limb from limb': { points: [10, 0, null] }, 'was consumed from within': { bonusSymbols: ['skull'] },
   'never returned': { bonusSymbols: ['bat'] }, 'was overcome with measles': { bonusSymbols: ['skull'] },
-  'died without cares': { pointOverride: [0, 0, 0], clearsNegative: true }
+  'died without cares': { points: [0, 0, 0], clearsNegative: true }
 }
 const deathsWithAssets = deaths.map(([title, flavor], index) => ({
   id: `death-${index}`, type: 'death', title, flavor, asset: `/assets/${deathAssets[title]}`,
@@ -141,12 +141,6 @@ const visibleIcon = (character) => character.modifiers.reduce((icon, card) => {
   return card.icon && card.icon !== 'none' ? card.icon : icon
 }, null)
 const canPlayDeathOn = (character, death = null) => Boolean(character?.alive && sumPoints(visiblePoints(character)) < 0 && (!death?.cannotOn || visibleIcon(character) !== death.cannotOn))
-const deathPointValues = {
-  'died without cares': 0, 'fell from on high': -10, 'was eaten by bears': -10, 'was baked into a pie': -10, 'died of despair': -15,
-  'was slain by an heir': -10, 'was devoured by weasels': -10, 'was choked by a tie': -10, 'was pushed down the stairs': -10,
-  'choked on a bone': -10, 'was torn limb from limb': 10, 'was torn limb to limb': 10, 'was consumed from within': -10,
-  'never returned': -10, 'drank too much rye': -10, 'was overcome with measles': -10
-}
 const deathBonus = (character, death = [...character.modifiers].reverse().find((card) => card.type === 'death')) => death?.bonusSymbols?.includes(visibleIcon(character)) ? -10 : 0
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
 const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
@@ -194,7 +188,7 @@ function score(character) {
   const death = [...character.modifiers].reverse().find((card) => card.type === 'death')
   if (death) {
     if (death.clearsNegative) return 0
-    return (deathPointValues[death.title] || 0) + (death.extraScore || 0) + deathBonus(character, death)
+    return sumPoints(visiblePoints(character)) + deathBonus(character, death)
   }
   return sumPoints(visiblePoints(character))
 }
@@ -203,7 +197,7 @@ function familyValue(player) {
   return player.chars.filter((character) => !character.alive).reduce((total, character) => {
     const death = [...character.modifiers].reverse().find((card) => card.type === 'death')
     if (death?.clearsNegative) return total
-    return total + sumPoints(visiblePoints(character)) + (death?.extraScore || 0) + deathBonus(character, death)
+    return total + sumPoints(visiblePoints(character)) + deathBonus(character, death)
   }, 0)
 }
 
