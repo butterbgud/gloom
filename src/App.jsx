@@ -147,6 +147,7 @@ const deathPointValues = {
   'choked on a bone': -10, 'was torn limb from limb': 10, 'was torn limb to limb': 10, 'was consumed from within': -10,
   'never returned': -10, 'drank too much rye': -10, 'was overcome with measles': -10
 }
+const deathBonus = (character, death = [...character.modifiers].reverse().find((card) => card.type === 'death')) => death?.bonusSymbols?.includes(visibleIcon(character)) ? -10 : 0
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
 const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
 
@@ -193,14 +194,17 @@ function score(character) {
   const death = [...character.modifiers].reverse().find((card) => card.type === 'death')
   if (death) {
     if (death.clearsNegative) return 0
-    const bonus = death.bonusSymbols?.includes(visibleIcon(character)) ? -10 : 0
-    return (deathPointValues[death.title] || 0) + (death.extraScore || 0) + bonus
+    return (deathPointValues[death.title] || 0) + (death.extraScore || 0) + deathBonus(character, death)
   }
   return sumPoints(visiblePoints(character))
 }
 
 function familyValue(player) {
-  return player.chars.filter((character) => !character.alive).reduce((total, character) => total + sumPoints(visiblePoints(character)), 0)
+  return player.chars.filter((character) => !character.alive).reduce((total, character) => {
+    const death = [...character.modifiers].reverse().find((card) => card.type === 'death')
+    if (death?.clearsNegative) return total
+    return total + sumPoints(visiblePoints(character)) + (death?.extraScore || 0) + deathBonus(character, death)
+  }, 0)
 }
 
 function App() {
