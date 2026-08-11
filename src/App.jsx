@@ -90,7 +90,7 @@ function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
   const botHandStart = handStart
   const deckStart = botHandStart + botCount * 5
   return {
-    turn: 1, active: 'player', plays: 0, selectedCard: null, target: null, mode, botCount, deck: deck.slice(deckStart), discard: [],
+    turn: 1, active: 'player', plays: 0, selectedCard: null, targeting: false, target: null, mode, botCount, deck: deck.slice(deckStart), discard: [],
     hand: deck.slice(0, handStart), botHands: Object.fromEntries(bots.map((bot, index) => [bot.id, deck.slice(botHandStart + index * 5, botHandStart + (index + 1) * 5)])), log: ['The table is set. Five families wait beneath the black sky.', `Your family: ${mode === 'thrones' ? families[playerFamily].thronesName : families[playerFamily].name}. ${bots.length} rival${bots.length === 1 ? '' : 's'} wait in the dark.`],
     players: [{ id: 'player', name: 'You', family: playerFamily, chars: playerChars }, ...bots],
   }
@@ -115,7 +115,6 @@ function App() {
   const [mode, setMode] = useState('original')
   const [botCount, setBotCount] = useState(1)
   const [bugReportStatus, setBugReportStatus] = useState('')
-  const [targeting, setTargeting] = useState(false)
   useEffect(() => {
     if (!game.active.startsWith('bot-') || screen === 'lobby') return undefined
     const timer = setTimeout(runBotTurn, 650)
@@ -131,15 +130,13 @@ function App() {
   const deathBlocked = selected?.type === 'death' && game.plays > 0
 
   const setSelection = (card) => {
-    setTargeting(false)
-    setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, target: null }))
+    setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, targeting: false, target: null }))
   }
-  const canTargetCharacter = (character) => Boolean(targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || score(character) < 0))
+  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || score(character) < 0))
   const chooseTarget = (playerId, charId) => {
     const character = game.players.find((player) => player.id === playerId)?.chars.find((candidate) => candidate.id === charId)
     if (!character || !canTargetCharacter(character)) return
     const target = { playerId, charId }
-    setTargeting(false)
     playSelected(target)
   }
 
@@ -227,7 +224,7 @@ function App() {
     if (!selected || !playable || deathBlocked) return
     const chosenTarget = targetOverride || game.target
     if (selected.type !== 'event' && !chosenTarget) {
-      setTargeting(true)
+      setGame((g) => ({ ...g, targeting: true }))
       return
     }
     setGame((g) => {
@@ -250,8 +247,7 @@ function App() {
       }
       next.discard.push(selected)
       next.plays += 1
-      next.selectedCard = null; next.target = null
-      setTargeting(false)
+      next.selectedCard = null; next.targeting = false; next.target = null
       if (next.plays >= 2) {
         next.plays = 0
         if (next.active === 'player') {
@@ -270,13 +266,12 @@ function App() {
 
   const discardSelected = () => {
     if (!selected) return
-    setTargeting(false)
     setGame((g) => {
       const next = structuredClone(g)
       next.hand = next.hand.filter((card) => card.id !== selected.id)
       next.discard.push(selected)
       next.log.unshift(`${next.players.find((p) => p.id === next.active).name} discarded “${selected.title}”. Even the deck looked away.`)
-      next.selectedCard = null; next.target = null; next.plays = 0
+      next.selectedCard = null; next.targeting = false; next.target = null; next.plays = 0
       if (next.active === 'player') {
         next.active = 'bot-1'
         next.log.unshift(`${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
@@ -297,7 +292,7 @@ function App() {
     setBugReportStatus('Gloom bug report copied')
     window.setTimeout(() => setBugReportStatus(''), 3500)
   }
-  const targetHint = deathBlocked ? 'Untimely Deaths must be your first action.' : !targeting ? 'Select Play, then choose an eligible character.' : selected?.type === 'death' ? 'Choose a living character with negative Self-Worth.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
+  const targetHint = deathBlocked ? 'Untimely Deaths must be your first action.' : !game.targeting ? 'Select Play, then choose an eligible character.' : selected?.type === 'death' ? 'Choose a living character with negative Self-Worth.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
 
   return <div className="app-shell">
     <header className="topbar">
@@ -307,7 +302,7 @@ function App() {
     <main className="layout">
       <section className="game-column">
         <div className="families-grid">
-          {game.players.map((player) => <FamilyBoard key={player.id} player={player} mode={game.mode} active={player.id === game.active} target={game.target} onTarget={chooseTarget} targetable={canTargetCharacter} hideDead={targeting && selected?.type !== 'event'} />)}
+          {game.players.map((player) => <FamilyBoard key={player.id} player={player} mode={game.mode} active={player.id === game.active} target={game.target} onTarget={chooseTarget} targetable={canTargetCharacter} hideDead={game.targeting && selected?.type !== 'event'} />)}
         </div>
         <div className="hand-panel">
           <div className="section-heading"><span className="eyebrow">Your hand · {game.hand.length} / 5</span></div>
