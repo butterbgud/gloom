@@ -158,3 +158,111 @@ open for transcription or correction.
 | 18 | drowned in a bog | |
 | 19 | was badly burned | |
 | 20 | was overcome with measles | |
+
+## Current asset mappings
+
+These mappings are the current prototype assignments. The artwork’s printed
+title is authoritative; this table is the place to correct a filename when
+the Sheet or source artwork disagrees. Missing assets are intentionally blank.
+
+### Modifier assets
+
+| # | Card title | Asset |
+|---:|---|---|
+| 1 | was blessed by a Bishop | `m1.webp` |
+| 2 | found love on the lake | `m2.webp` |
+| 3 | was married magnificently | `m3.webp` |
+| 4 | was wondrously well wed | `m4.webp` |
+| 5 | was delighted by ducklings | `m5.webp` |
+| 6 | was crippled by creditors | `m6.webp` |
+| 7 | was written out of the will | `m7.webp` |
+| 8 | was clever at cards | `m8.webp` |
+| 9 | was swindled by a salesman | `m9.webp` |
+| 10 | landed a legacy | `m10.webp` |
+| 11 | stole from a stiff | `m11.webp` |
+| 12 | was perturbed by pudding | `m12.webp` |
+| 13 | found maggots in the meat | `m13.webp` |
+| 14 | was ruined by rum | `m14.webp` |
+| 15 | found fame at a feast | `m15.webp` |
+| 16 | was sickened by salmon | `m16.webp` |
+| 17 | was diverted by drink | `m17.webp` |
+| 18 | was driven to drink | `m18.webp` |
+| 19 | starved in a storm | `m19.webp` |
+| 20 | was plagued by the pox | `m20.webp` |
+| 21 | was distressed by dysentery | `m21.webp` |
+| 22 | was greeted by ghosts | `m22.webp` |
+| 23 | was hunted by horrors | `m23.webp` |
+| 24 | was galled by gangrene | `m24.webp` |
+| 25 | was jinxed by gypsies | `m25.webp` |
+| 26 | was pestered by poltergeists | `m26.webp` |
+| 27 | grew old without grace | `m27.webp` |
+| 28 | contracted consumption | `m28.webp` |
+| 29 | went mildly mad | `m29.webp` |
+| 30 | was burdened by boils | `m30.webp` |
+| 31 | suffered from sores | `m31.webp` |
+| 32 | was mauled by a manatee | `m32.webp` |
+| 33 | was taunted by tigers | `m33.webp` |
+| 34 | was pierced by porcupines | `m34.webp` |
+| 35 | was marooned on the moors | `m35.webp` |
+| 36 | was terrified by topiary | `m36.webp` |
+| 37 | was charmed by the circus | `m37.webp` |
+| 38 | was wounded by wasps | `m38.webp` |
+| 39 | was startled by snakes | `m39.webp` |
+| 40 | was pursued by poodles | `m40.webp` |
+| 41 | was menaced by mice | `m41.webp` |
+| 42 | was popular in parliament | `m42.webp` |
+| 43 | had a picnic in the park | `m43.webp` |
+| 44 | was chased by children | `m44.webp` |
+| 45 | was scarred by scandals | `m45.webp` |
+| 46 | was beaten by beggars | `m46.webp` |
+| 47 | was shunned by society | `m47.webp` |
+| 48 | broke many bones | `m48.webp` |
+| 49 | was put into prison | `m49.webp` |
+| 50 | was trapped on a train | `m50.webp` |
+| 51 | fell down a well | `m51.webp` |
+| 52 | was cursed by the queen | `m52.webp` |
+| 53 | was mocked by midgets | `m53.webp` |
+| 54 | was the toast of the town | `m54.webp` |
+| 55 | was chastised by the church | — |
+
+### Event assets
+
+| # | Card title | Asset |
+|---:|---|---|
+| 1 | Body Thief | `event-e1.webp` |
+| 2 | A Tragic Misunderstanding | `event-e2.webp` |
+| 3 | To Be or Not To Be | `event-e3.webp` |
+| 4 | A Stormy Night | `event-e4.webp` |
+| 5 | The Root of All Evil | `event-e5.webp` |
+| 6 | A Second Chance | `event-e6.webp` |
+| 7 | Misfortune Favors the Old | `event-e7.webp` |
+| 8 | Til Death Do Us Part | `event-e8.webp` |
+| 9 | Smoke and Mirrors | `event-e9.webp` |
+| 10 | Twist of Fate | `event-e10.webp` |
+| 11 | A Chance to Begin Again | `event-e11.webp` |
+| 12 | An Unpleasant Surprise | — |
+
+### Untimely Death assets
+
+| # | Card title | Asset |
+|---:|---|---|
+| 1 | ran out of air | `death-d1.webp` |
+| 2 | fell from on high | `death-d7.webp` |
+| 3 | died without cares | — |
+| 4 | was eaten by bears | `death-d6.webp` |
+| 5 | was baked into a pie | `death-d10.webp` |
+| 6 | died of despair | `death-d13.webp` |
+| 7 | was slain by an heir | `death-d8.webp` |
+| 8 | was devoured by weasels | `death-d3.webp` |
+| 9 | was choked by a tie | `death-d18.webp` |
+| 10 | died old and alone | `death-d5.webp` |
+| 11 | was pushed down the stairs | `death-d11.webp` |
+| 12 | choked on a bone | `death-d2.webp` |
+| 13 | was torn limb from limb | `death-d17.webp` |
+| 14 | was consumed from within | `death-d4.webp` |
+| 15 | never returned | `death-d14.webp` |
+| 16 | was burnt by a mob | `death-d19.webp` |
+| 17 | drank too much rye | — |
+| 18 | drowned in a bog | — |
+| 19 | was badly burned | `death-d16.webp` |
+| 20 | was overcome with measles | `death-d12.webp` |
