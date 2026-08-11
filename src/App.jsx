@@ -274,7 +274,7 @@ function applyEventEffect(state, card, actorId, eventTarget = null) {
       break
     }
     case 'A Second Chance': {
-      const target = deadChars(actor).find((character) => character.modifiers.some((modifier) => modifier.type === 'death'))
+      const target = eventTarget || deadChars(actor).find((character) => character.modifiers.some((modifier) => modifier.type === 'death'))
       const death = target && [...target.modifiers].reverse().find((modifier) => modifier.type === 'death')
       if (target && death) { removeModifier(target, death); target.alive = true }
       break
@@ -412,7 +412,7 @@ function App() {
   const setSelection = (card) => {
     setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, targeting: false, target: null }))
   }
-  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && character.alive && ((selected.type === 'event' && selected.title === 'An Unpleasant Surprise') || (selected.type !== 'event' && (selected.type !== 'death' || canPlayDeathOn(character, selected, game.heartDeathOverride)) && (selected.type !== 'modifier' || selected.ability !== 'heartOnly' || visibleIcon(character) === 'heart'))))
+  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && ((selected.type === 'event' && selected.title === 'An Unpleasant Surprise' && character.alive) || (selected.type === 'event' && selected.title === 'A Second Chance' && !character.alive && character.modifiers.some((card) => card.type === 'death')) || (selected.type !== 'event' && character.alive && (selected.type !== 'death' || canPlayDeathOn(character, selected, game.heartDeathOverride)) && (selected.type !== 'modifier' || selected.ability !== 'heartOnly' || visibleIcon(character) === 'heart'))))
   const chooseTarget = (playerId, charId) => {
     const character = game.players.find((player) => player.id === playerId)?.chars.find((candidate) => candidate.id === charId)
     if (!character || !canTargetCharacter(character)) return
@@ -555,7 +555,7 @@ function App() {
   const playSelected = (targetOverride = null) => {
     if (!selected || !playable || deathBlocked) return
     const chosenTarget = targetOverride || game.target
-    const eventNeedsTarget = selected.type === 'event' && selected.title === 'An Unpleasant Surprise'
+    const eventNeedsTarget = selected.type === 'event' && ['An Unpleasant Surprise', 'A Second Chance'].includes(selected.title)
     if ((selected.type !== 'event' || eventNeedsTarget) && !chosenTarget) {
       setGame((g) => ({ ...g, targeting: true }))
       return
@@ -567,7 +567,7 @@ function App() {
       const actor = next.players.find((p) => p.id === next.active)
       if (selected.type === 'modifier' && (!target || !target.alive || (selected.ability === 'heartOnly' && visibleIcon(target) !== 'heart'))) return g
       if (selected.type === 'event' && actor.chars.some((character) => character.modifiers.some((card) => card.ability === 'blockEvents'))) return g
-      if (eventNeedsTarget && (!target || !target.alive)) return g
+      if (eventNeedsTarget && (!target || (selected.title === 'An Unpleasant Surprise' && !target.alive) || (selected.title === 'A Second Chance' && target.alive))) return g
       if (selected.type === 'death' && !canPlayDeathOn(target, selected, next.heartDeathOverride)) return g
       next.hand = next.hand.filter((card) => card.id !== selected.id)
       if (selected.type === 'modifier') {
@@ -708,7 +708,7 @@ function App() {
     setBugReportStatus('Gloom bug report copied')
     window.setTimeout(() => setBugReportStatus(''), 3500)
   }
-  const targetHint = deathBlocked ? 'Untimely Deaths must be your first action.' : !game.targeting ? 'Select Play, then choose an eligible character.' : selected?.title === 'An Unpleasant Surprise' ? 'Choose a living character to lose its top Modifier.' : selected?.type === 'death' ? 'Choose any living character.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
+  const targetHint = deathBlocked ? 'Untimely Deaths must be your first action.' : !game.targeting ? 'Select Play, then choose an eligible character.' : selected?.title === 'An Unpleasant Surprise' ? 'Choose a living character to lose its top Modifier.' : selected?.title === 'A Second Chance' ? 'Choose a dead character to resurrect.' : selected?.type === 'death' ? 'Choose any living character.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
 
   return <div className="app-shell">
     <header className="topbar">
