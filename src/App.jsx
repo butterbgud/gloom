@@ -72,7 +72,7 @@ const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) =
 const allCards = [...modifiers, ...events, ...deathsWithAssets]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
 const isPointNullifyingDeath = (card) => card.type === 'death' && card.title === 'died without cares'
-const canPlayDeathOn = (character) => Boolean(character?.alive)
+const canPlayDeathOn = (character) => Boolean(character?.alive && visiblePoints(character).reduce((total, point) => total + point, 0) < 0)
 const deathPointValues = {
   'fell from on high': -10, 'was eaten by bears': -10, 'was baked into a pie': -10, 'died of despair': -15,
   'was slain by an heir': -10, 'was devoured by weasels': -10, 'was choked by a tie': -10, 'was pushed down the stairs': -10,
