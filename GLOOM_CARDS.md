@@ -124,18 +124,18 @@ open for transcription or correction.
 
 | # | Card title | Ability / effect | Asset |
 |---:|---|---|
-| 1 | Body Thief | Remove one living character and one dead character from play.  `event-e1.webp` |
-| 2 | A Tragic Misunderstanding | Swap the top Modifiers on two living characters.  `event-e2.webp` |
-| 3 | To Be or Not To Be | Move one Untimely Death from a dead character to a living character with negative Self-Worth.  `event-e3.webp` |
-| 4 | A Stormy Night | Draw four cards, play one, then discard down to the draw limit.  `event-e4.webp` |
-| 5 | The Root of All Evil | Draw one card from each opponent's hand and immediately play those you wish; keep the rest.  `event-e5.webp` |
-| 6 | A Second Chance | Cancel an Untimely Death as it is played, or remove one from a character.  `event-e6.webp` |
-| 7 | Misfortune Favors the Old | Play two additional negative cards this round.  `event-e7.webp` |
-| 8 | Til Death Do Us Part | Play an Untimely Death on any character with the heart icon, regardless of Self-Worth.  `event-e8.webp` |
-| 9 | Smoke and Mirrors | Cancel an Event as it is played.  `event-e9.webp` |
-| 10 | Twist of Fate | Replace the top Modifier on a character with one from your hand; keep the replaced card.  `event-e10.webp` |
-| 11 | A Chance to Begin Again | Discard all Modifiers from one living character.  `event-e11.webp` |
-| 12 | An Unpleasant Surprise | Remove the top Modifier from one living character and discard it.  `—` |
+| 1 | Body Thief | Remove one living character and one dead character from play.  `e12.webp` |
+| 2 | A Tragic Misunderstanding | Swap the top Modifiers on two living characters.  `event-e8.webp` |
+| 3 | To Be or Not To Be | Move one Untimely Death from a dead character to a living character with negative Self-Worth.  `event-e5.webp` |
+| 4 | A Stormy Night | Draw four cards, play one, then discard down to the draw limit.  `event-e11.webp` |
+| 5 | The Root of All Evil | Draw one card from each opponent's hand and immediately play those you wish; keep the rest.  `event-e3.webp` |
+| 6 | A Second Chance | Cancel an Untimely Death as it is played, or remove one from a character.  `event-e7.webp` |
+| 7 | Misfortune Favors the Old | Play two additional negative cards this round.  `event-e10.webp` |
+| 8 | Til Death Do Us Part | Play an Untimely Death on any character with the heart icon, regardless of Self-Worth.  `event-e9.webp` |
+| 9 | Smoke and Mirrors | Cancel an Event as it is played.  `event-e4.webp` |
+| 10 | Twist of Fate | Replace the top Modifier on a character with one from your hand; keep the replaced card.  `event-e2.webp` |
+| 11 | A Chance to Begin Again | Discard all Modifiers from one living character.  `e13.webp` |
+| 12 | An Unpleasant Surprise | Remove the top Modifier from one living character and discard it.  `event-e1.webp` |
 
 ## Untimely Death cards
 

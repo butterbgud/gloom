@@ -40,12 +40,18 @@ const deathAssets = {
 }
 const deathsWithAssets = deaths.map(([title, flavor], index) => ({ id: `death-${index}`, type: 'death', title, flavor, asset: deathAssets[title] ? `/assets/${deathAssets[title]}` : null, pathos: 0 }))
 
+const eventAssets = {
+  'Body Thief': 'e12.webp', 'A Tragic Misunderstanding': 'event-e8.webp', 'To Be or Not To Be': 'event-e5.webp',
+  'A Stormy Night': 'event-e11.webp', 'The Root of All Evil': 'event-e3.webp', 'A Second Chance': 'event-e7.webp',
+  'Misfortune Favors the Old': 'event-e10.webp', 'Til Death Do Us Part': 'event-e9.webp', 'Smoke and Mirrors': 'event-e4.webp',
+  'Twist of Fate': 'event-e2.webp', 'A Chance to Begin Again': 'e13.webp', 'An Unpleasant Surprise': 'event-e1.webp'
+}
 const events = [
   ['Body Thief', 'Remove one of your living characters and one dead character from play.'], ['A Tragic Misunderstanding', 'Swap the top modifiers on two living characters.'], ['To Be or Not To Be', 'Move one Untimely Death from a dead character to a living character with negative Self-Worth.'],
   ['A Stormy Night', 'Draw four cards, play one, then discard down to your draw limit.'], ['The Root of All Evil', "Steal a card from each opponent's hand and play what you wish."], ['A Second Chance', 'Cancel an Untimely Death as it is played, or remove one from a character.'],
   ['Misfortune Favors the Old', 'Play two additional negative cards this round.'], ['Til Death Do Us Part', 'Play an Untimely Death on any character with the heart icon.'], ['Smoke and Mirrors', 'Cancel an Event as it is played.'],
   ['Twist of Fate', 'Replace a character’s top Modifier with one from your hand.'], ['A Chance to Begin Again', 'Discard all Modifiers from one living character.'], ['An Unpleasant Surprise', 'Remove the top Modifier from one living character.'],
-].map(([title, text], index) => ({ id: `event-${index}`, type: 'event', title, text, asset: index < 11 ? `/assets/event-e${index + 1}.webp` : null, pathos: 0 }))
+].map(([title, text], index) => ({ id: `event-${index}`, type: 'event', title, text, asset: eventAssets[title] ? `/assets/${eventAssets[title]}` : null, pathos: 0 }))
 
 // Keep this data aligned with the Modifier table in GLOOM_CARDS.md. `null` is
 // transparent (reveals the card below); 0 is a real blank circle that masks it.
