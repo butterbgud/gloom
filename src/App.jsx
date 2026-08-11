@@ -128,6 +128,7 @@ function App() {
   const selected = game.hand.find((card) => card.id === game.selectedCard)
   const familyScore = (player) => player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
   const playable = selected && (selected.type === 'event' || selected.type === 'death' || selected.type === 'modifier')
+  const deathBlocked = selected?.type === 'death' && game.plays > 0
 
   const setSelection = (card) => {
     setTargeting(false)
@@ -224,7 +225,7 @@ function App() {
   }
 
   const playSelected = (targetOverride = null) => {
-    if (!selected || !playable) return
+    if (!selected || !playable || deathBlocked) return
     const chosenTarget = targetOverride || game.target
     if (selected.type !== 'event' && !chosenTarget) {
       setTargeting(true)
@@ -252,7 +253,7 @@ function App() {
       next.plays += 1
       next.selectedCard = null; next.target = null
       setTargeting(false)
-      if (next.plays >= 2 || selected.type === 'death') {
+      if (next.plays >= 2) {
         next.plays = 0
         if (next.active === 'player') {
           next.active = 'bot-1'
@@ -297,7 +298,7 @@ function App() {
     setBugReportStatus('Gloom bug report copied')
     window.setTimeout(() => setBugReportStatus(''), 3500)
   }
-  const targetHint = !targeting ? 'Select Play, then choose an eligible character.' : selected?.type === 'death' ? 'Choose a living character with negative Self-Worth.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
+  const targetHint = deathBlocked ? 'Untimely Deaths must be your first action.' : !targeting ? 'Select Play, then choose an eligible character.' : selected?.type === 'death' ? 'Choose a living character with negative Self-Worth.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
 
   return <div className="app-shell">
     <header className="topbar">
@@ -312,7 +313,7 @@ function App() {
         <div className="hand-panel">
           <div className="section-heading"><span className="eyebrow">Your hand · {game.hand.length} / 5</span></div>
           <div className="hand-fan-scroll"><div className="hand-fan" style={{ width: `${game.hand.length ? (typeof window !== 'undefined' && window.innerWidth <= 700 ? 96 : 124) + (game.hand.length <= 1 ? 0 : (typeof window !== 'undefined' && window.innerWidth <= 700 ? 43 : 72)) * (game.hand.length - 1) : 0}px` }}>{game.hand.map((card, index) => { const compactHand = typeof window !== 'undefined' && window.innerWidth <= 700; const step = game.hand.length <= 1 ? 0 : compactHand ? 43 : 72; const rotation = game.hand.length <= 1 ? 0 : (index / (game.hand.length - 1) - .5) * 18; const selected = game.selectedCard === card.id; return <div className={`hand-fan-card ${selected ? 'selected' : ''}`} key={card.id} style={{ left: `${index * step}px`, zIndex: selected ? 100 : index, transform: `rotate(${rotation}deg) translateY(${selected ? -10 : 0}px) scale(${selected ? 1.04 : 1})` }}><HandCard card={card} selected={selected} onClick={() => setSelection(card)} /></div> })}</div></div>
-          {selected && <div className="card-play-stage"><div className="card-play-preview"><HandCard card={selected} selected onClick={() => {}} /></div><span className="target-hint">{targetHint}</span><div className="card-play-actions"><button className="primary-button" disabled={!playable} onClick={playSelected}>Play</button><button className="ghost-button" onClick={discardSelected}>Discard</button></div></div>}
+          {selected && <div className="card-play-stage"><div className="card-play-preview"><HandCard card={selected} selected onClick={() => setSelection(selected)} /></div><span className="target-hint">{targetHint}</span><div className="card-play-actions"><button className="primary-button" disabled={!playable || deathBlocked} onClick={playSelected}>Play</button><button className="ghost-button" onClick={discardSelected}>Discard</button></div></div>}
         </div>
       </section>
     </main>
