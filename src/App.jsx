@@ -129,8 +129,17 @@ const modifierSeed = [
   ['stole from a stiff', [null, null, -15], 'coin', 'm53.webp'],
   ['was shunned by society', [-15, -15, -15], 'none', 'm54.webp'],
 ]
+const modifierAbilities = {
+  'was married magnificently': 'drawLimit', 'found love on the lake': 'drawLimit',
+  'was written out of the will': 'skipDraw', 'was swindled by a salesman': 'skipDraw',
+  'was wondrously well wed': 'drawTwo', 'was clever at cards': 'drawOne',
+  'was diverted by drink': 'discardOne', 'found maggots in the meat': 'discardOne',
+  'was sickened by salmon': 'discardOnModifier',
+  'was blessed by a Bishop': 'refillHand', 'was crippled by creditors': 'transferTwo',
+  'landed a legacy': 'drawTwo',
+}
 const modifiers = modifierSeed.map(([title, points, icon, asset], index) => ({
-  id: `modifier-${index}`, type: 'modifier', title, points, icon, asset: `/assets/${asset}`, flavor: 'A fresh misfortune takes root.'
+  id: `modifier-${index}`, type: 'modifier', title, points, icon, asset: `/assets/${asset}`, ability: modifierAbilities[title] || null, flavor: 'A fresh misfortune takes root.'
 }))
 
 const allCards = [...modifiers, ...events, ...deathsWithAssets]
@@ -170,7 +179,7 @@ function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
   const botHandStart = handStart
   const deckStart = botHandStart + botCount * 5
   return {
-    turn: 1, active: 'player', plays: 0, playLimit: 2, heartDeathOverride: false, selectedCard: null, targeting: false, target: null, mode, botCount, deck: deck.slice(deckStart), discard: [],
+    turn: 1, active: 'player', plays: 0, playLimit: 2, heartDeathOverride: false, skipDraw: {}, selectedCard: null, targeting: false, target: null, mode, botCount, deck: deck.slice(deckStart), discard: [],
     hand: deck.slice(0, handStart), botHands: Object.fromEntries(bots.map((bot, index) => [bot.id, deck.slice(botHandStart + index * 5, botHandStart + (index + 1) * 5)])), log: ['The table is set. Five families wait beneath the black sky.', `Your family: ${mode === 'thrones' ? families[playerFamily].thronesName : families[playerFamily].name}. ${bots.length} rival${bots.length === 1 ? '' : 's'} wait in the dark.`],
     players, gameOver: false, winnerId: null, pendingEvent: null,
     history: [{ turn: 1, values: Object.fromEntries(players.map((player) => [player.id, familyValue(player)])) }],
@@ -280,6 +289,36 @@ function applyEventEffect(state, card, actorId) {
   return state
 }
 
+function modifierDrawLimit(state, playerId) {
+  const player = state.players.find((candidate) => candidate.id === playerId)
+  return 5 + (player?.chars || []).reduce((total, character) => total + character.modifiers.filter((modifier) => modifier.ability === 'drawLimit').length, 0)
+}
+
+function applyModifierAbility(state, modifier, actorId) {
+  const hand = actorId === 'player' ? state.hand : state.botHands[actorId]
+  if (!hand || !modifier.ability) return state
+  const discardOne = () => { if (hand.length) state.discard.push(hand.shift()) }
+  const draw = (count) => { while (count > 0 && state.deck.length) { hand.push(state.deck.shift()); count -= 1 } }
+  switch (modifier.ability) {
+    case 'skipDraw': state.skipDraw[actorId] = true; break
+    case 'drawTwo': draw(2); break
+    case 'drawOne': draw(1); break
+    case 'discardOne': discardOne(); break
+    case 'refillHand': while (hand.length < modifierDrawLimit(state, actorId) && state.deck.length) hand.push(state.deck.shift()); break
+    case 'transferTwo': {
+      const actorIndex = state.players.findIndex((player) => player.id === actorId)
+      const receiver = state.players[(actorIndex + 1) % state.players.length]
+      const taken = hand.splice(0, Math.min(2, hand.length))
+      if (receiver.id === 'player') state.hand.push(...taken)
+      else state.botHands[receiver.id].push(...taken)
+      break
+    }
+    case 'discardOnModifier': discardOne(); break
+    default: break
+  }
+  return state
+}
+
 function finalizeGame(state) {
   const values = Object.fromEntries(state.players.map((player) => [player.id, familyValue(player)]))
   const history = [...(state.history || [])]
@@ -338,13 +377,17 @@ function App() {
 
   const drawToLimit = (state) => {
     const next = { ...state, hand: [...state.hand], deck: [...state.deck], discard: [...state.discard] }
-    while (next.hand.length < 5 && next.deck.length) next.hand.push(next.deck.shift())
+    if (next.skipDraw?.player) { next.skipDraw = { ...next.skipDraw, player: false }; return next }
+    while (next.hand.length < modifierDrawLimit(next, 'player') && next.deck.length) next.hand.push(next.deck.shift())
     return next
   }
 
   const drawBotToLimit = (state) => {
     const next = { ...state, botHands: Object.fromEntries(Object.entries(state.botHands).map(([id, hand]) => [id, [...hand]])), deck: [...state.deck] }
-    Object.values(next.botHands).forEach((hand) => { while (hand.length < 5 && next.deck.length) hand.push(next.deck.shift()) })
+    Object.entries(next.botHands).forEach(([id, hand]) => {
+      if (next.skipDraw?.[id]) { next.skipDraw[id] = false; return }
+      while (hand.length < modifierDrawLimit(next, id) && next.deck.length) hand.push(next.deck.shift())
+    })
     return next
   }
 
@@ -402,6 +445,10 @@ function App() {
           if (target) {
             target.modifiers.push(modifier)
             removeCard(modifier)
+            next.botHands[rival.id] = botHand
+            applyModifierAbility(next, modifier, rival.id)
+            botHand = next.botHands[rival.id]
+            if (modifier.ability !== 'discardOnModifier' && rival.chars.some((character) => character.modifiers.some((card) => card.ability === 'discardOnModifier')) && botHand.length) next.discard.push(botHand.shift())
             next.log.unshift(`${rival.name} played “${modifier.title}” on ${target.name}.`)
             continue
           }
@@ -457,6 +504,8 @@ function App() {
       next.hand = next.hand.filter((card) => card.id !== selected.id)
       if (selected.type === 'modifier') {
         target.modifiers.push(selected)
+        applyModifierAbility(next, selected, actor.id)
+        if (selected.ability !== 'discardOnModifier' && actor.chars.some((character) => character.modifiers.some((card) => card.ability === 'discardOnModifier')) && next.hand.length) next.discard.push(next.hand.shift())
         next.log.unshift(`${actor.name} played “${selected.title}” on ${target.name}. Self-Worth: ${score(target) > 0 ? '+' : ''}${score(target)}.`)
       } else if (selected.type === 'death') {
         target.alive = false
