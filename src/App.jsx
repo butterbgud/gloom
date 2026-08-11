@@ -87,7 +87,11 @@ function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
 }
 
 function score(character) {
-  return character.modifiers.reduce((total, card) => total + card.points.reduce((a, b) => a + b, 0), 0)
+  const visiblePoints = character.modifiers.reduce((visible, card) => {
+    if (!card.points) return visible
+    return visible.map((point, index) => card.points[index] || point)
+  }, [0, 0, 0])
+  return visiblePoints.reduce((total, point) => total + point, 0)
 }
 
 function App() {
@@ -342,7 +346,7 @@ function FamilyBoard({ player, mode, active, target, onTarget, targetable }) {
 
 function CharacterCard({ character, family, selected, targetable, onClick }) {
   const total = score(character)
-  return <button className={`character-card ${character.alive ? '' : 'dead'} ${targetable ? 'targetable' : ''} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className={`character-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}>{character.modifiers.length > 0 && <strong>{total > 0 ? '+' : ''}{total}</strong>}</div><div className="portrait">{character.alive ? character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span> : <img src="/assets/dead.webp" alt={`${character.name} dead`} />}</div><div className="modifier-stack">{character.modifiers.slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.asset && <img src={modifier.asset} alt="" />}{modifier.title}</span>)}{character.modifiers.length > 3 && <span>+{character.modifiers.length - 3} more</span>}</div></button>
+  return <button className={`character-card ${character.alive ? '' : 'dead'} ${targetable ? 'targetable' : ''} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className={`character-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}>{character.modifiers.length > 0 && <strong>{total > 0 ? '+' : ''}{total}</strong>}</div><div className="portrait">{character.alive ? character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span> : <img src="/assets/dead.webp" alt={`${character.name} dead`} />}</div><div className="modifier-stack">{character.modifiers.filter((modifier) => !modifier.asset).slice(-3).map((modifier) => <span key={modifier.id} className={modifier.type}>{modifier.title}</span>)}</div>{character.modifiers.filter((modifier) => modifier.asset).map((modifier, index) => <img key={modifier.id} className={`character-overlay ${modifier.type}`} src={modifier.asset} alt={modifier.title} style={{ zIndex: index + 2 }} />)}</button>
 }
 
 function HandCard({ card, selected, onClick }) {
