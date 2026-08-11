@@ -357,6 +357,16 @@ function App() {
       if (selected.type === 'death' && selected.discardHand) {
         next.discard.push(...next.hand)
         next.hand = []
+        next.plays = 0
+        if (next.active === 'player') {
+          next.active = 'bot-1'
+          next.log.unshift(`${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
+        } else {
+          next.active = 'player'
+          next.turn += 1
+          next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
+        }
+        return drawToLimit(next)
       }
       next.plays += 1
       next.selectedCard = null; next.targeting = false; next.target = null
