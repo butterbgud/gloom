@@ -140,8 +140,7 @@ function App() {
     if (!character || !canTargetCharacter(character)) return
     const target = { playerId, charId }
     setTargeting(false)
-    setGame((g) => ({ ...g, target }))
-    window.setTimeout(() => playSelected(target), 0)
+    playSelected(target)
   }
 
   const drawToLimit = (state) => {
@@ -308,7 +307,7 @@ function App() {
     <main className="layout">
       <section className="game-column">
         <div className="families-grid">
-          {game.players.map((player) => <FamilyBoard key={player.id} player={player} mode={game.mode} active={player.id === game.active} target={game.target} onTarget={chooseTarget} targetable={canTargetCharacter} />)}
+          {game.players.map((player) => <FamilyBoard key={player.id} player={player} mode={game.mode} active={player.id === game.active} target={game.target} onTarget={chooseTarget} targetable={canTargetCharacter} hideDead={targeting && selected?.type !== 'event'} />)}
         </div>
         <div className="hand-panel">
           <div className="section-heading"><span className="eyebrow">Your hand · {game.hand.length} / 5</span></div>
@@ -364,11 +363,11 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
   </div>
 }
 
-function FamilyBoard({ player, mode, active, target, onTarget, targetable }) {
+function FamilyBoard({ player, mode, active, target, onTarget, targetable, hideDead }) {
   const family = families[player.family]
   const familyName = mode === 'thrones' ? family.thronesName : family.name
   const familyValue = player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
-  return <div className={`family-board ${active ? 'active-board' : ''}`}><div className="family-head"><div className={`family-glyph ${family.tone}`}>{family.icon}</div><div><span className="eyebrow">{player.name} · {active ? 'active fate' : 'opponent'}</span><h3>{familyName}</h3></div><div className="family-value"><span>FAMILY VALUE</span><b className={familyValue < 0 ? 'good-score' : ''}>{familyValue > 0 ? '+' : ''}{familyValue}</b></div></div><div className="character-row">{player.chars.map((character) => <CharacterCard key={character.id} character={character} family={family} selected={target?.charId === character.id} targetable={targetable(character)} onClick={() => onTarget(player.id, character.id)} />)}</div></div>
+  return <div className={`family-board ${active ? 'active-board' : ''}`}><div className="family-head"><div className={`family-glyph ${family.tone}`}>{family.icon}</div><div><span className="eyebrow">{player.name} · {active ? 'active fate' : 'opponent'}</span><h3>{familyName}</h3></div><div className="family-value"><span>FAMILY VALUE</span><b className={familyValue < 0 ? 'good-score' : ''}>{familyValue > 0 ? '+' : ''}{familyValue}</b></div></div><div className="character-row">{player.chars.filter((character) => !hideDead || character.alive).map((character) => <CharacterCard key={character.id} character={character} family={family} selected={target?.charId === character.id} targetable={targetable(character)} onClick={() => onTarget(player.id, character.id)} />)}</div></div>
 }
 
 function CharacterCard({ character, family, selected, targetable, onClick }) {
