@@ -132,15 +132,19 @@ const modifierSeed = [
 const modifierAbilities = {
   'was distressed by dysentery': 'previousKeepTwo',
   'was married magnificently': 'drawLimitUp', 'found love on the lake': 'drawLimitUp',
-  'was written out of the will': 'skipDraw', 'was swindled by a salesman': 'skipDraw',
+  'was cursed by the queen': 'discardHand', 'was written out of the will': 'skipDraw', 'was swindled by a salesman': 'skipDraw',
+  'went mildly mad': 'discardOnModifier', 'was taunted by tigers': 'skipDraw', 'was marooned on the moors': 'freeDeath',
+  'was widowed at the wedding': 'heartOnly',
   'was wondrously well wed': 'drawTwo', 'was clever at cards': 'drawOne',
   'was diverted by drink': 'discardOne', 'found maggots in the meat': 'discardOne',
   'was jinxed by gypsies': 'drawLimitDown', 'grew old without grace': 'previousDiscardTwo',
   'was sickened by salmon': 'discardOnModifier', 'was blessed by a Bishop': 'refillHand',
   'was crippled by creditors': 'previousKeepTwo', 'was pestered by poltergeists': 'previousDiscardOne',
-  'landed a legacy': 'drawTwo', 'was greeted by ghosts': 'discardThree',
-  'contracted consumption': 'drawLimitDown', 'was plagued by the pox': 'drawLimitDown',
-  'was hunted by horrors': 'skipTurn', 'was driven to drink': 'discardOne',
+  'was scarred by scandals': 'discardHand', 'landed a legacy': 'drawTwo', 'was greeted by ghosts': 'discardThree',
+  'was the toast of the town': 'drawLimitUp', 'was popular in parliament': 'drawTwo',
+  'contracted consumption': 'drawLimitDown', 'was plagued by the pox': 'drawLimitDown', 'suffered from sores': 'drawLimitDown',
+  'was hunted by horrors': 'skipTurn', 'was shunned by society': 'skipTurn', 'was driven to drink': 'discardOne',
+  'was put into prison': 'blockEvents', 'fell down a well': 'freeDeath',
 }
 const modifiers = modifierSeed.map(([title, points, icon, asset], index) => ({
   id: `modifier-${index}`, type: 'modifier', title, points, icon, asset: `/assets/${asset}`, ability: modifierAbilities[title] || null, flavor: 'A fresh misfortune takes root.'
@@ -298,17 +302,20 @@ function modifierDrawLimit(state, playerId) {
   return Math.max(0, 5 + (player?.chars || []).reduce((total, character) => total + character.modifiers.reduce((value, modifier) => value + (modifier.ability === 'drawLimitUp' ? 1 : modifier.ability === 'drawLimitDown' ? -1 : 0), 0), 0))
 }
 
-function applyModifierAbility(state, modifier, actorId) {
+function applyModifierAbility(state, modifier, actorId, targetCharacter = null) {
   const hand = actorId === 'player' ? state.hand : state.botHands[actorId]
   if (!hand || !modifier.ability) return state
+  const removeFromHand = (card) => { const index = hand.findIndex((candidate) => candidate.id === card.id); if (index >= 0) hand.splice(index, 1) }
   const discardOne = () => { if (hand.length) state.discard.push(hand.shift()) }
   const draw = (count) => { while (count > 0 && state.deck.length) { hand.push(state.deck.shift()); count -= 1 } }
   const previousPlayer = state.players[(state.players.findIndex((player) => player.id === actorId) - 1 + state.players.length) % state.players.length]
   const previousHand = previousPlayer?.id === 'player' ? state.hand : state.botHands[previousPlayer?.id]
   const giveToPrevious = (count) => { const taken = hand.splice(0, Math.min(count, hand.length)); if (previousHand) previousHand.push(...taken) }
   switch (modifier.ability) {
+    case 'discardHand': state.discard.push(...hand.splice(0)); state.endTurnAfterAbility = true; break
     case 'skipDraw': state.skipDraw[actorId] = true; break
     case 'skipTurn': state.skipTurn[actorId] = true; break
+    case 'heartOnly': modifier.cannotOn = 'heart'; break
     case 'drawTwo': draw(2); break
     case 'drawOne': draw(1); break
     case 'discardOne': discardOne(); break
@@ -317,6 +324,15 @@ function applyModifierAbility(state, modifier, actorId) {
     case 'previousDiscardTwo': discardOne(); discardOne(); break
     case 'previousDiscardOne': discardOne(); break
     case 'discardThree': discardOne(); discardOne(); discardOne(); break
+    case 'freeDeath': {
+      const death = hand.find((candidate) => candidate.type === 'death')
+      if (death && targetCharacter && canPlayDeathOn(targetCharacter, death)) {
+        removeFromHand(death); targetCharacter.alive = false; targetCharacter.modifiers.push(death); state.discard.push(death)
+        if (death.discardHand) { state.discard.push(...hand.splice(0)); state.endTurnAfterAbility = true }
+      }
+      break
+    }
+    case 'blockEvents': break
     case 'discardOnModifier': discardOne(); break
     default: break
   }
@@ -383,7 +399,7 @@ function App() {
   const setSelection = (card) => {
     setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, targeting: false, target: null }))
   }
-  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || canPlayDeathOn(character, selected, game.heartDeathOverride)))
+  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || canPlayDeathOn(character, selected, game.heartDeathOverride)) && (selected.type !== 'modifier' || selected.ability !== 'heartOnly' || visibleIcon(character) === 'heart'))
   const chooseTarget = (playerId, charId) => {
     const character = game.players.find((player) => player.id === playerId)?.chars.find((candidate) => candidate.id === charId)
     if (!character || !canTargetCharacter(character)) return
@@ -467,12 +483,13 @@ function App() {
         const negativeModifier = botHand.find((card) => card.type === 'modifier' && card.points.some((point) => point < 0))
         const modifier = negativeModifier || botHand.find((card) => card.type === 'modifier' && sumPoints(card.points) !== 0)
         if (modifier) {
-          const target = modifier.points.some((point) => point < 0) ? negativeTarget(livingChars(rival)) : pointLeaderFor(modifier)
+          const eligible = livingChars(rival).filter((character) => modifier.ability !== 'heartOnly' || visibleIcon(character) === 'heart')
+          const target = modifier.points.some((point) => point < 0) ? negativeTarget(eligible) : pointLeaderFor(modifier)
           if (target) {
             target.modifiers.push(modifier)
             removeCard(modifier)
             next.botHands[rival.id] = botHand
-            applyModifierAbility(next, modifier, rival.id)
+            applyModifierAbility(next, modifier, rival.id, target)
             botHand = next.botHands[rival.id]
             if (modifier.ability !== 'discardOnModifier' && rival.chars.some((character) => character.modifiers.some((card) => card.ability === 'discardOnModifier')) && botHand.length) next.discard.push(botHand.shift())
             next.log.unshift(`${rival.name} played “${modifier.title}” on ${target.name}.`)
@@ -480,7 +497,8 @@ function App() {
           }
         }
 
-        const event = botHand.find((card) => card.type === 'event')
+        const eventBlocked = rival.chars.some((character) => character.modifiers.some((card) => card.ability === 'blockEvents'))
+        const event = eventBlocked ? null : botHand.find((card) => card.type === 'event')
         if (event) {
           removeCard(event)
           next.pendingEvent = { card: event, actorId: rival.id }
@@ -525,12 +543,13 @@ function App() {
       const targetRef = targetOverride || next.target
       const target = targetRef ? next.players.find((p) => p.id === targetRef.playerId)?.chars.find((c) => c.id === targetRef.charId) : null
       const actor = next.players.find((p) => p.id === next.active)
-      if (selected.type === 'modifier' && (!target || !target.alive)) return g
+      if (selected.type === 'modifier' && (!target || !target.alive || (selected.ability === 'heartOnly' && visibleIcon(target) !== 'heart'))) return g
+      if (selected.type === 'event' && actor.chars.some((character) => character.modifiers.some((card) => card.ability === 'blockEvents'))) return g
       if (selected.type === 'death' && !canPlayDeathOn(target, selected, next.heartDeathOverride)) return g
       next.hand = next.hand.filter((card) => card.id !== selected.id)
       if (selected.type === 'modifier') {
         target.modifiers.push(selected)
-        applyModifierAbility(next, selected, actor.id)
+        applyModifierAbility(next, selected, actor.id, target)
         if (selected.ability !== 'discardOnModifier' && actor.chars.some((character) => character.modifiers.some((card) => card.ability === 'discardOnModifier')) && next.hand.length) next.discard.push(next.hand.shift())
         next.log.unshift(`${actor.name} played “${selected.title}” on ${target.name}. Self-Worth: ${score(target) > 0 ? '+' : ''}${score(target)}.`)
       } else if (selected.type === 'death') {
@@ -542,6 +561,16 @@ function App() {
         next.log.unshift(`${actor.name} played Event “${selected.title}”. ${selected.text}`)
       }
       next.discard.push(selected)
+      if (selected.type === 'modifier' && next.endTurnAfterAbility) {
+        next.endTurnAfterAbility = false
+        next.plays = 0
+        next.playLimit = 2
+        next.heartDeathOverride = false
+        next.active = 'bot-1'
+        next.log.unshift(`${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
+        next.selectedCard = null; next.targeting = false; next.target = null
+        return finalizeGame(drawToLimit(next))
+      }
       if (selected.type === 'death' && selected.discardHand) {
         next.discard.push(...next.hand)
         next.hand = []
