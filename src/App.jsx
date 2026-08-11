@@ -31,14 +31,28 @@ const deaths = [
   ['was badly burned', 'Fire warms the heart… and other vital organs.'], ['was overcome with measles', 'X marks the spots.'],
 ]
 const deathAssets = {
-  'ran out of air': 'death-d1.webp', 'fell from on high': 'death-d7.webp', 'was eaten by bears': 'death-d6.webp',
-  'was baked into a pie': 'death-d10.webp', 'died of despair': 'death-d13.webp', 'was slain by an heir': 'death-d8.webp',
-  'was devoured by weasels': 'death-d3.webp', 'was choked by a tie': 'death-d18.webp', 'died old and alone': 'death-d5.webp',
-  'was pushed down the stairs': 'death-d11.webp', 'choked on a bone': 'death-d2.webp', 'was torn limb from limb': 'death-d17.webp',
-  'was consumed from within': 'death-d4.webp', 'never returned': 'death-d14.webp', 'was burnt by a mob': 'death-d19.webp',
+  'ran out of air': 'death-d1.webp', 'fell from on high': 'death-d7.webp', 'died without cares': 'd20.webp',
+  'was eaten by bears': 'death-d6.webp', 'was baked into a pie': 'death-d10.webp', 'died of despair': 'death-d13.webp',
+  'was slain by an heir': 'death-d8.webp', 'was devoured by weasels': 'death-d3.webp', 'was choked by a tie': 'd18.webp',
+  'died old and alone': 'death-d5.webp', 'was pushed down the stairs': 'death-d11.webp', 'choked on a bone': 'death-d2.webp',
+  'was torn limb from limb': 'death-d17.webp', 'was consumed from within': 'death-d4.webp', 'never returned': 'death-d14.webp',
+  'was burnt by a mob': 'death-d19.webp', 'drank too much rye': 'd21.webp', 'drowned in a bog': 'death-d15.webp',
   'was badly burned': 'death-d16.webp', 'was overcome with measles': 'death-d12.webp'
 }
-const deathsWithAssets = deaths.map(([title, flavor], index) => ({ id: `death-${index}`, type: 'death', title, flavor, asset: deathAssets[title] ? `/assets/${deathAssets[title]}` : null, pathos: 0 }))
+const deathRules = {
+  'fell from on high': { bonusSymbols: ['skull'] }, 'was eaten by bears': { bonusSymbols: ['bat'] },
+  'was baked into a pie': { bonusSymbols: ['goblet'] }, 'died of despair': { extraScore: -15, discardHand: true },
+  'was slain by an heir': { bonusSymbols: ['coin', 'heart'] }, 'was devoured by weasels': { bonusSymbols: ['bat'] },
+  'was choked by a tie': { bonusSymbols: ['skull'] }, 'died old and alone': { extraScore: -15, cannotOn: 'heart' },
+  'was pushed down the stairs': { bonusSymbols: ['coin', 'bat'] }, 'choked on a bone': { bonusSymbols: ['goblet'] },
+  'was torn limb from limb': { extraScore: 0, pointOverride: [10, 0, null] }, 'was consumed from within': { bonusSymbols: ['skull'] },
+  'never returned': { bonusSymbols: ['bat'] }, 'was overcome with measles': { bonusSymbols: ['skull'] },
+  'died without cares': { pointOverride: [0, 0, 0], clearsNegative: true }
+}
+const deathsWithAssets = deaths.map(([title, flavor], index) => ({
+  id: `death-${index}`, type: 'death', title, flavor, asset: `/assets/${deathAssets[title]}`,
+  ...(deathRules[title] || {}), pathos: 0
+}))
 
 const eventAssets = {
   'Body Thief': 'e12.webp', 'A Tragic Misunderstanding': 'event-e8.webp', 'To Be or Not To Be': 'event-e5.webp',
@@ -122,12 +136,16 @@ const modifiers = modifierSeed.map(([title, points, icon, asset], index) => ({
 const allCards = [...modifiers, ...events, ...deathsWithAssets]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
 const isPointNullifyingDeath = (card) => card.type === 'death' && card.title === 'died without cares'
-const canPlayDeathOn = (character) => Boolean(character?.alive && visiblePoints(character).reduce((total, point) => total + point, 0) < 0)
+const visibleIcon = (character) => character.modifiers.reduce((icon, card) => {
+  if (card.icon === 'blank') return null
+  return card.icon && card.icon !== 'none' ? card.icon : icon
+}, null)
+const canPlayDeathOn = (character, death = null) => Boolean(character?.alive && sumPoints(visiblePoints(character)) < 0 && (!death?.cannotOn || visibleIcon(character) !== death.cannotOn))
 const deathPointValues = {
-  'fell from on high': -10, 'was eaten by bears': -10, 'was baked into a pie': -10, 'died of despair': -15,
+  'died without cares': 0, 'fell from on high': -10, 'was eaten by bears': -10, 'was baked into a pie': -10, 'died of despair': -15,
   'was slain by an heir': -10, 'was devoured by weasels': -10, 'was choked by a tie': -10, 'was pushed down the stairs': -10,
   'choked on a bone': -10, 'was torn limb from limb': 10, 'was torn limb to limb': 10, 'was consumed from within': -10,
-  'never returned': -10, 'was overcome with measles': -10
+  'never returned': -10, 'drank too much rye': -10, 'was overcome with measles': -10
 }
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
 const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
@@ -173,7 +191,11 @@ const sumPoints = (points) => points.reduce((total, point) => total + (point ?? 
 
 function score(character) {
   const death = [...character.modifiers].reverse().find((card) => card.type === 'death')
-  if (death) return deathPointValues[death.title] || 0
+  if (death) {
+    if (death.clearsNegative) return 0
+    const bonus = death.bonusSymbols?.includes(visibleIcon(character)) ? -10 : 0
+    return (deathPointValues[death.title] || 0) + (death.extraScore || 0) + bonus
+  }
   return sumPoints(visiblePoints(character))
 }
 
@@ -206,7 +228,7 @@ function App() {
   const setSelection = (card) => {
     setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, targeting: false, target: null }))
   }
-  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || canPlayDeathOn(character)))
+  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || canPlayDeathOn(character, selected)))
   const chooseTarget = (playerId, charId) => {
     const character = game.players.find((player) => player.id === playerId)?.chars.find((candidate) => candidate.id === charId)
     if (!character || !canTargetCharacter(character)) return
@@ -253,12 +275,16 @@ function App() {
           continue
         }
 
-        const death = botHand.find((card) => isPointNullifyingDeath(card) && livingChars(opponent).some(canPlayDeathOn))
+        const death = botHand.find((card) => isPointNullifyingDeath(card) && livingChars(opponent).some((character) => canPlayDeathOn(character, card)))
         if (death) {
-          const target = weakest(livingChars(opponent).filter(canPlayDeathOn))
+          const target = weakest(livingChars(opponent).filter((character) => canPlayDeathOn(character, death)))
           target.alive = false
           target.modifiers.push(death)
           removeCard(death)
+          if (death.discardHand) {
+            next.discard.push(...botHand)
+            botHand = []
+          }
           next.log.unshift(`${rival.name} sealed ${target.name}'s fate: “${death.title}”. The character is dead.`)
           continue
         }
@@ -316,7 +342,7 @@ function App() {
       const target = targetRef ? next.players.find((p) => p.id === targetRef.playerId)?.chars.find((c) => c.id === targetRef.charId) : null
       const actor = next.players.find((p) => p.id === next.active)
       if (selected.type === 'modifier' && (!target || !target.alive)) return g
-      if (selected.type === 'death' && !canPlayDeathOn(target)) return g
+      if (selected.type === 'death' && !canPlayDeathOn(target, selected)) return g
       next.hand = next.hand.filter((card) => card.id !== selected.id)
       if (selected.type === 'modifier') {
         target.modifiers.push(selected)
@@ -329,6 +355,10 @@ function App() {
         next.log.unshift(`${actor.name} played Event “${selected.title}”. ${selected.text}`)
       }
       next.discard.push(selected)
+      if (selected.type === 'death' && selected.discardHand) {
+        next.discard.push(...next.hand)
+        next.hand = []
+      }
       next.plays += 1
       next.selectedCard = null; next.targeting = false; next.target = null
       if (next.plays >= 2) {

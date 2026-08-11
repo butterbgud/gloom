@@ -139,25 +139,25 @@ open for transcription or correction.
 
 ## Untimely Death cards
 
-| # | Card title | Ability / notes | Asset |
-|---:|---|---|
-| 1 | ran out of air |  `death-d1.webp` |
-| 2 | fell from on high |  `death-d7.webp` |
-| 3 | died without cares |  `—` |
-| 4 | was eaten by bears |  `death-d6.webp` |
-| 5 | was baked into a pie |  `death-d10.webp` |
-| 6 | died of despair |  `death-d13.webp` |
-| 7 | was slain by an heir |  `death-d8.webp` |
-| 8 | was devoured by weasels |  `death-d3.webp` |
-| 9 | was choked by a tie |  `death-d18.webp` |
-| 10 | died old and alone |  `death-d5.webp` |
-| 11 | was pushed down the stairs |  `death-d11.webp` |
-| 12 | choked on a bone |  `death-d2.webp` |
-| 13 | was torn limb from limb |  `death-d17.webp` |
-| 14 | was consumed from within |  `death-d4.webp` |
-| 15 | never returned |  `death-d14.webp` |
-| 16 | was burnt by a mob |  `death-d19.webp` |
-| 17 | drank too much rye |  `—` |
-| 18 | drowned in a bog |  `—` |
-| 19 | was badly burned |  `death-d16.webp` |
-| 20 | was overcome with measles |  `death-d12.webp` |
+| # | Card title |Bonus symbol| Ability / notes | Asset |
+|---:|---|---|---|
+| 1 | ran out of air ||  `death-d1.webp` |
+| 2 | fell from on high |Skull|  `death-d7.webp` |
+| 3 | died without cares ||Additional 0 in top, middle and bottomn positions. clears all negative points from character|  `d20.webp` |
+| 4 | was eaten by bears |Bat|  `death-d6.webp` |
+| 5 | was baked into a pie |Goblet|  `death-d10.webp` |
+| 6 | died of despair ||Additional -15 points in the bottom position, player discards their whole hand after playing |  `death-d13.webp` |
+| 7 | was slain by an heir |Coin/Heart|  `death-d8.webp` |
+| 8 | was devoured by weasels |Bat|  `death-d3.webp` |
+| 9 | was choked by a tie |Skull| `d18.webp` |
+| 10 | died old and alone ||Additional -15 points in the top position, cannot be played on character with heart symbol showing|  `death-d5.webp` |
+| 11 | was pushed down the stairs |Coin/Bat|  `death-d11.webp` |
+| 12 | choked on a bone |Goblet|  `death-d2.webp` |
+| 13 | was torn limb from limb |Bat|Additional +10 points in the top position, and 0 in the middle position|  `death-d17.webp` |
+| 14 | was consumed from within |Skull|  `death-d4.webp` |
+| 15 | never returned |Bat|  `death-d14.webp` |
+| 16 | was burnt by a mob ||  `death-d19.webp` |
+| 17 | drank too much rye ||  `d21.webp` |
+| 18 | drowned in a bog ||  `death-d15.webp` |
+| 19 | was badly burned ||  `death-d16.webp` |
+| 20 | was overcome with measles |Skull|  `death-d12.webp` |
