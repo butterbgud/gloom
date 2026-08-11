@@ -73,7 +73,12 @@ const allCards = [...modifiers, ...events, ...deathsWithAssets]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
 const isPointNullifyingDeath = (card) => card.type === 'death' && card.title === 'died without cares'
 const canPlayDeathOn = (character) => Boolean(character?.alive && score(character) < 0)
-const deathPointValues = { 'was torn limb from limb': 10, 'was torn limb to limb': 10 }
+const deathPointValues = {
+  'fell from on high': -10, 'was eaten by bears': -10, 'was baked into a pie': -10, 'died of despair': -15,
+  'was slain by an heir': -10, 'was devoured by weasels': -10, 'was choked by a tie': -10, 'was pushed down the stairs': -10,
+  'choked on a bone': -10, 'was torn limb from limb': 10, 'was torn limb to limb': 10, 'was consumed from within': -10,
+  'never returned': -10, 'was overcome with measles': -10
+}
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
 const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
 
