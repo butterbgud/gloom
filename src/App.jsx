@@ -165,13 +165,15 @@ function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
   const deck = seededDeck(mode)
   const botNames = ['Lady Mourning', 'The Pale Cousin', 'Baron Nocturne']
   const bots = rivalFamilies.map((family, index) => ({ id: `bot-${index + 1}`, name: botNames[index], family, chars: characterSets[family].map((name, i) => living(name, family, i, mode === 'original' ? families[family].portraits?.[i] : null)) }))
+  const players = [{ id: 'player', name: 'You', family: playerFamily, chars: playerChars }, ...bots]
   const handStart = 5
   const botHandStart = handStart
   const deckStart = botHandStart + botCount * 5
   return {
     turn: 1, active: 'player', plays: 0, selectedCard: null, targeting: false, target: null, mode, botCount, deck: deck.slice(deckStart), discard: [],
     hand: deck.slice(0, handStart), botHands: Object.fromEntries(bots.map((bot, index) => [bot.id, deck.slice(botHandStart + index * 5, botHandStart + (index + 1) * 5)])), log: ['The table is set. Five families wait beneath the black sky.', `Your family: ${mode === 'thrones' ? families[playerFamily].thronesName : families[playerFamily].name}. ${bots.length} rival${bots.length === 1 ? '' : 's'} wait in the dark.`],
-    players: [{ id: 'player', name: 'You', family: playerFamily, chars: playerChars }, ...bots],
+    players, gameOver: false, winnerId: null,
+    history: [{ turn: 1, values: Object.fromEntries(players.map((player) => [player.id, familyValue(player)])) }],
   }
 }
 
@@ -201,6 +203,19 @@ function familyValue(player) {
   }, 0)
 }
 
+function finalizeGame(state) {
+  const values = Object.fromEntries(state.players.map((player) => [player.id, familyValue(player)]))
+  const history = [...(state.history || [])]
+  const last = history[history.length - 1]
+  if (last?.turn === state.turn) history[history.length - 1] = { turn: state.turn, values }
+  else history.push({ turn: state.turn, values })
+  const eliminated = state.players.some((player) => player.chars.every((character) => !character.alive))
+  if (!eliminated || state.gameOver) return { ...state, history }
+  const survivors = state.players.filter((player) => player.chars.some((character) => character.alive))
+  const winner = [...(survivors.length ? survivors : state.players)].sort((a, b) => familyValue(a) - familyValue(b))[0]
+  return { ...state, history, gameOver: true, winnerId: winner.id, active: '', selectedCard: null, targeting: false, target: null, log: [`${winner.name} wins the séance with Family Value ${familyValue(winner)}.`, ...state.log] }
+}
+
 function App() {
   const [game, setGame] = useState(makeGame)
   const [screen, setScreen] = useState('lobby')
@@ -210,13 +225,14 @@ function App() {
   const [botCount, setBotCount] = useState(1)
   const [bugReportStatus, setBugReportStatus] = useState('')
   useEffect(() => {
-    if (!game.active.startsWith('bot-') || screen === 'lobby') return undefined
+    if (game.gameOver || !game.active.startsWith('bot-') || screen === 'lobby') return undefined
     const timer = setTimeout(runBotTurn, 650)
     return () => clearTimeout(timer)
   }, [game.active, game.turn, screen])
   const [showRules, setShowRules] = useState(false)
   const [showChronicle, setShowChronicle] = useState(false)
   if (screen === 'lobby') return <Lobby language={language} onLanguage={setLanguage} mode={mode} onMode={setMode} chosenFamily={chosenFamily} onChooseFamily={setChosenFamily} botCount={botCount} onBotCount={setBotCount} onStart={() => { setGame(makeGame(chosenFamily, mode, botCount)); setScreen('table') }} />
+  if (game.gameOver) return <GameOver game={game} onRestart={() => { setGame(makeGame(chosenFamily, mode, botCount)); setScreen('table') }} />
   const activePlayer = game.players.find((p) => p.id === game.active)
   const selected = game.hand.find((card) => card.id === game.selectedCard)
   const familyScore = (player) => player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
@@ -324,7 +340,7 @@ function App() {
         next.active = 'player'
         next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
       }
-      return drawBotToLimit(drawToLimit(next))
+      return finalizeGame(drawBotToLimit(drawToLimit(next)))
     })
   }
 
@@ -366,7 +382,7 @@ function App() {
           next.turn += 1
           next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
         }
-        return drawToLimit(next)
+        return finalizeGame(drawToLimit(next))
       }
       next.plays += 1
       next.selectedCard = null; next.targeting = false; next.target = null
@@ -380,9 +396,9 @@ function App() {
           next.turn += 1
           next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
         }
-        return drawToLimit(next)
+        return finalizeGame(drawToLimit(next))
       }
-      return next
+      return finalizeGame(next)
     })
   }
 
@@ -401,7 +417,7 @@ function App() {
         next.active = 'player'; next.turn += 1
         next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
       }
-      return drawToLimit(next)
+      return finalizeGame(drawToLimit(next))
     })
   }
 
@@ -436,6 +452,27 @@ function App() {
     {showRules && <div className="rules-popover" role="dialog"><button className="popover-close" onClick={() => setShowRules(false)} aria-label="Close rules">×</button><span className="eyebrow">Quick reference</span><h2>How to suffer</h2><p>On your turn, play or discard up to two cards, then draw back to five.</p><p>Modifiers stack on living characters. Only the top visible Pathos spaces count.</p><p>Untimely Deaths are played during your first play and require negative Self-Worth.</p><p>The game ends when a family is entirely eliminated. The lowest dead-character total wins.</p></div>}
     {showChronicle && <div className="chronicle-drawer"><div className="chronicle-title"><span className="eyebrow">The black book</span><h2>Chronicle</h2></div>{game.log.map((entry, i) => <div className={`log-entry ${i === 0 ? 'latest' : ''}`} key={`${entry}-${i}`}><span className="log-index">{String(game.log.length - i).padStart(2, '0')}</span><p>{entry}</p></div>)}</div>}
   </div>
+}
+
+function GameOver({ game, onRestart }) {
+  const winner = game.players.find((player) => player.id === game.winnerId) || game.players[0]
+  const familyName = (player) => game.mode === 'thrones' ? families[player.family].thronesName : families[player.family].name
+  return <main className="results-shell"><section className="results-card"><span className="eyebrow">The séance is complete</span><h1>{winner.name} wins</h1><p className="results-family">{familyName(winner)} · Family Value {familyValue(winner)}</p><FamilyValueChart game={game} /><div className="results-scores">{game.players.map((player) => <div className={player.id === winner.id ? 'winner-score' : ''} key={player.id}><span>{player.name}</span><strong>{familyValue(player)}</strong></div>)}</div><button className="primary-button results-button" onClick={onRestart}>Play again</button></section></main>
+}
+
+function FamilyValueChart({ game }) {
+  const width = 760
+  const height = 280
+  const padding = 34
+  const history = game.history?.length ? game.history : [{ turn: 1, values: {} }]
+  const values = history.flatMap((entry) => game.players.map((player) => entry.values[player.id] ?? 0))
+  const min = Math.min(0, ...values)
+  const max = Math.max(0, ...values)
+  const range = Math.max(1, max - min)
+  const x = (index) => padding + (index / Math.max(1, history.length - 1)) * (width - padding * 2)
+  const y = (value) => padding + ((max - value) / range) * (height - padding * 2)
+  const colors = ['#d1797d', '#9db3bd', '#c7a66b', '#a5c99e']
+  return <div className="value-chart"><div className="chart-heading"><span>Family Value over turns</span><small>Lower is better</small></div><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Family Value over game turns"><line x1={padding} x2={width - padding} y1={y(0)} y2={y(0)} className="chart-zero" />{game.players.map((player, playerIndex) => <polyline key={player.id} fill="none" stroke={colors[playerIndex % colors.length]} strokeWidth={player.id === game.winnerId ? 4 : 2} points={history.map((entry, index) => `${x(index)},${y(entry.values[player.id] ?? 0)}`).join(' ')} />)}<text x={padding} y={height - 8}>Turn {history[0].turn}</text><text x={width - padding} y={height - 8} textAnchor="end">Turn {history[history.length - 1].turn}</text></svg><div className="chart-legend">{game.players.map((player, index) => <span key={player.id} className={player.id === game.winnerId ? 'winner-legend' : ''}><i style={{ background: colors[index % colors.length] }} />{player.name}</span>)}</div></div>
 }
 
 function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamily, botCount, onBotCount, onStart }) {
