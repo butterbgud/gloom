@@ -172,7 +172,7 @@ function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
   return {
     turn: 1, active: 'player', plays: 0, selectedCard: null, targeting: false, target: null, mode, botCount, deck: deck.slice(deckStart), discard: [],
     hand: deck.slice(0, handStart), botHands: Object.fromEntries(bots.map((bot, index) => [bot.id, deck.slice(botHandStart + index * 5, botHandStart + (index + 1) * 5)])), log: ['The table is set. Five families wait beneath the black sky.', `Your family: ${mode === 'thrones' ? families[playerFamily].thronesName : families[playerFamily].name}. ${bots.length} rival${bots.length === 1 ? '' : 's'} wait in the dark.`],
-    players, gameOver: false, winnerId: null,
+    players, gameOver: false, winnerId: null, pendingEvent: null,
     history: [{ turn: 1, values: Object.fromEntries(players.map((player) => [player.id, familyValue(player)])) }],
   }
 }
@@ -225,10 +225,15 @@ function App() {
   const [botCount, setBotCount] = useState(1)
   const [bugReportStatus, setBugReportStatus] = useState('')
   useEffect(() => {
-    if (game.gameOver || !game.active.startsWith('bot-') || screen === 'lobby') return undefined
+    if (game.gameOver || game.pendingEvent || !game.active.startsWith('bot-') || screen === 'lobby') return undefined
     const timer = setTimeout(runBotTurn, 650)
     return () => clearTimeout(timer)
-  }, [game.active, game.turn, screen])
+  }, [game.active, game.turn, game.pendingEvent, screen])
+  useEffect(() => {
+    if (!game.pendingEvent || game.gameOver) return undefined
+    const timer = setTimeout(resolvePendingEvent, 5000)
+    return () => clearTimeout(timer)
+  }, [game.pendingEvent, game.gameOver])
   useEffect(() => {
     if (screen === 'lobby' || game.gameOver || !game.players.some((player) => player.chars.every((character) => !character.alive))) return
     setGame((current) => finalizeGame(current))
@@ -328,8 +333,9 @@ function App() {
         const event = botHand.find((card) => card.type === 'event')
         if (event) {
           removeCard(event)
-          next.log.unshift(`${rival.name} played Event “${event.title}”.`)
-          continue
+          next.pendingEvent = { card: event, actorId: rival.id }
+          next.log.unshift(`${rival.name} played Event “${event.title}”. It hangs over the table.`)
+          break
         }
 
         // Keep a single Death in hand until it becomes playable; discard other
@@ -339,6 +345,7 @@ function App() {
       }
 
       next.botHands[rival.id] = botHand
+      if (next.pendingEvent) return next
       next.plays = 0
       const botIndex = next.players.findIndex((player) => player.id === rival.id)
       const nextBot = next.players.slice(botIndex + 1).find((player) => player.id.startsWith('bot-'))
@@ -430,6 +437,38 @@ function App() {
     })
   }
 
+  const resolvePendingEvent = () => {
+    setGame((g) => {
+      if (!g.pendingEvent) return g
+      const next = structuredClone(g)
+      const { card, actorId } = next.pendingEvent
+      next.pendingEvent = null
+      next.plays = 0
+      next.active = 'player'
+      next.turn += 1
+      next.log.unshift(`Event “${card.title}” resolves for ${next.players.find((p) => p.id === actorId)?.name || 'the table'}.`)
+      next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
+      return finalizeGame(drawToLimit(next))
+    })
+  }
+
+  const cancelPendingEvent = () => {
+    setGame((g) => {
+      const cancelCard = g.hand.find((card) => card.type === 'event' && card.title === 'Smoke and Mirrors')
+      if (!g.pendingEvent || !cancelCard) return g
+      const next = structuredClone(g)
+      next.hand = next.hand.filter((card) => card.id !== cancelCard.id)
+      next.discard.push(next.pendingEvent.card, cancelCard)
+      next.log.unshift(`You canceled Event “${next.pendingEvent.card.title}” with “${cancelCard.title}”.`)
+      next.pendingEvent = null
+      next.plays = 0
+      next.active = 'player'
+      next.turn += 1
+      next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
+      return finalizeGame(drawToLimit(next))
+    })
+  }
+
   const passTurn = () => {
     if (game.active !== 'player' || game.targeting) return
     setGame((g) => {
@@ -458,6 +497,7 @@ function App() {
       <div className="brand"><span className="brand-mark">✠</span><div className="header-turn"><span>TURN</span><strong>{game.turn}</strong><small>{activePlayer.name}</small></div><div className="header-plays"><span>PLAYS</span><strong>{Math.max(0, 2 - game.plays)}</strong></div><div className="header-deck"><span>DECK</span><strong>{game.deck.length}</strong></div><div className="header-tools"><button className="header-tool" onClick={() => setShowChronicle((value) => !value)} aria-label="Chronicle">H</button><button className="header-tool" onClick={() => setShowRules(true)} aria-label="Quick rules">?</button></div></div>
       <div className="top-actions">{bugReportStatus && <span className="bug-report-status">{bugReportStatus}</span>}<button className="ghost-button bug-button" onClick={reportBug} aria-label="Report bug">B</button></div>
     </header>
+    {game.pendingEvent && <div className="event-announcement" role="dialog" aria-live="assertive"><span className="eyebrow">Untimely Event</span><HandCard card={game.pendingEvent.card} selected /><strong>{game.pendingEvent.card.title}</strong><small>{game.pendingEvent.card.text}</small>{game.hand.some((card) => card.type === 'event' && card.title === 'Smoke and Mirrors') && <button className="primary-button" onClick={cancelPendingEvent}>Cancel with Smoke and Mirrors</button>}<small className="event-countdown">The event resolves in five seconds.</small></div>}
     <main className="layout">
       <section className="game-column">
         <div className="families-grid">

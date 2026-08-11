@@ -139,6 +139,12 @@ button { font: inherit; color: inherit; }
 }
 .hand-card.asset-card { padding: 0; overflow: hidden; }
 .hand-card.asset-card .hand-card-art { width: 100%; height: 100%; min-height: 160px; margin: 0; object-fit: cover; }
+.event-announcement { position: fixed; z-index: 300; top: 50%; left: 50%; display: flex; width: min(330px, calc(100vw - 32px)); transform: translate(-50%, -50%); flex-direction: column; align-items: center; gap: 10px; padding: 20px; border: 1px solid #9b606b; background: rgba(24, 17, 25, .98); box-shadow: 0 20px 70px rgba(0,0,0,.7); text-align: center; }
+.event-announcement .hand-card { width: 220px; min-height: 300px; padding: 0; transform: none; pointer-events: none; }
+.event-announcement .hand-card-art { width: 100%; height: 300px; min-height: 300px; margin: 0; object-fit: cover; }
+.event-announcement > strong { color: #eadccd; font: 600 15px 'Cinzel', serif; }
+.event-announcement > small { color: #a69496; font-size: 10px; line-height: 1.4; }
+.event-announcement .event-countdown { color: #c88a91; }
 .character-card.targetable { filter: drop-shadow(0 0 7px rgba(194, 106, 115, .78)); }
 .character-card.targetable:hover, .character-card.targetable.targeted { filter: drop-shadow(0 0 12px rgba(235, 142, 150, .98)); }
 .asset-inspector { flex-wrap: wrap; justify-content: center; }
