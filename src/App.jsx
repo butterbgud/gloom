@@ -125,6 +125,10 @@ function score(character) {
   return visiblePoints(character).reduce((total, point) => total + point, 0)
 }
 
+function familyValue(player) {
+  return player.chars.filter((character) => !character.alive).reduce((total, character) => total + visiblePoints(character).reduce((sum, point) => sum + point, 0), 0)
+}
+
 function App() {
   const [game, setGame] = useState(makeGame)
   const [screen, setScreen] = useState('lobby')
@@ -388,8 +392,8 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
 function FamilyBoard({ player, mode, active, target, onTarget, targetable, hideDead }) {
   const family = families[player.family]
   const familyName = mode === 'thrones' ? family.thronesName : family.name
-  const familyValue = player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
-  return <div className={`family-board ${active ? 'active-board' : ''}`}><div className="family-head"><div className={`family-glyph ${family.tone}`}>{family.icon}</div><div><span className="eyebrow">{player.name} · {active ? 'active fate' : 'opponent'}</span><h3>{familyName}</h3></div><div className="family-value"><span>FAMILY VALUE</span><b className={familyValue < 0 ? 'good-score' : ''}>{familyValue > 0 ? '+' : ''}{familyValue}</b></div></div><div className="character-row">{player.chars.filter((character) => !hideDead || character.alive).map((character) => <CharacterCard key={character.id} character={character} family={family} selected={target?.charId === character.id} targetable={targetable(character)} onClick={() => onTarget(player.id, character.id)} />)}</div></div>
+  const familyTotal = familyValue(player)
+  return <div className={`family-board ${active ? 'active-board' : ''}`}><div className="family-head"><div className={`family-glyph ${family.tone}`}>{family.icon}</div><div><span className="eyebrow">{player.name} · {active ? 'active fate' : 'opponent'}</span><h3>{familyName}</h3></div><div className="family-value"><span>FAMILY VALUE</span><b className={familyTotal < 0 ? 'good-score' : ''}>{familyTotal > 0 ? '+' : ''}{familyTotal}</b></div></div><div className="character-row">{player.chars.filter((character) => !hideDead || character.alive).map((character) => <CharacterCard key={character.id} character={character} family={family} selected={target?.charId === character.id} targetable={targetable(character)} onClick={() => onTarget(player.id, character.id)} />)}</div></div>
 }
 
 function CharacterCard({ character, family, selected, targetable, onClick }) {
