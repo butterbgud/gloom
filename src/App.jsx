@@ -283,16 +283,14 @@ function App() {
 
       for (let action = 0; action < 2 && botHand.length; action += 1) {
         const deathCards = botHand.filter((card) => card.type === 'death')
-        if (deathCards.length > 1) {
-          const excessDeath = deathCards.find((card) => !isPointNullifyingDeath(card)) || deathCards[1]
-          removeCard(excessDeath)
-          next.log.unshift(`${rival.name} discarded an excess Untimely Death.`)
-          continue
-        }
-
-        const death = botHand.find((card) => isPointNullifyingDeath(card) && livingChars(opponent).some((character) => canPlayDeathOn(character, card)))
+        // Untimely Deaths are first-action plays. Bots should use them on their
+        // own most negative eligible character before discarding excess Deaths.
+        const ownDeath = action === 0 && deathCards.find((card) => livingChars(rival).some((character) => canPlayDeathOn(character, card)))
+        const opponentDeath = action === 0 && !ownDeath && deathCards.find((card) => isPointNullifyingDeath(card) && livingChars(opponent).some((character) => canPlayDeathOn(character, card)))
+        const death = ownDeath || opponentDeath
         if (death) {
-          const target = weakest(livingChars(opponent).filter((character) => canPlayDeathOn(character, death)))
+          const eligible = livingChars(ownDeath ? rival : opponent).filter((character) => canPlayDeathOn(character, death))
+          const target = weakest(eligible)
           target.alive = false
           target.modifiers.push(death)
           removeCard(death)
@@ -301,6 +299,13 @@ function App() {
             botHand = []
           }
           next.log.unshift(`${rival.name} sealed ${target.name}'s fate: “${death.title}”. The character is dead.`)
+          continue
+        }
+
+        if (deathCards.length > 1) {
+          const excessDeath = deathCards.find((card) => !isPointNullifyingDeath(card)) || deathCards[1]
+          removeCard(excessDeath)
+          next.log.unshift(`${rival.name} discarded an excess Untimely Death.`)
           continue
         }
 
