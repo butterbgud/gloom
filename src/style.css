@@ -168,6 +168,9 @@ button { font: inherit; color: inherit; }
 .card-play-preview .hand-card:not(.asset-card) { padding: 18px; }
 .card-play-actions { display: flex; gap: 8px; width: 100%; }
 .card-play-actions button { flex: 1; }
+.edition-option.coming-soon { position: relative; overflow: hidden; cursor: not-allowed; filter: saturate(.35); opacity: .7; }
+.edition-option.coming-soon::after { content: ''; position: absolute; inset: 46% -12% auto; height: 24px; transform: rotate(-8deg); background: repeating-linear-gradient(135deg, #d7a62b 0 12px, #211b16 12px 24px); box-shadow: 0 1px 4px #0009; }
+.construction-tape { position: absolute; z-index: 1; left: 0; right: 0; top: 46%; transform: rotate(-8deg); color: #f6e7bb; text-align: center; font: 700 8px/24px 'Cinzel', serif; letter-spacing: .08em; text-shadow: 0 1px 2px #000; }
 @media (max-width: 700px) {
   .family-board, .active-board { padding-top: 6px; padding-bottom: 6px; }
   .card-play-stage { max-width: calc(100vw - 20px); padding: 9px; }
