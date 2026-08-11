@@ -359,7 +359,7 @@ function Lobby({ language, onLanguage, mode, onMode, chosenFamily, onChooseFamil
     }, 2020)
     return () => { clearTimeout(start); clearTimeout(finish) }
   }, [mode, backgroundMode])
-  const backgroundUrl = (edition) => edition === 'thrones' ? '/assets/lobby-thrones.webp' : '/assets/lobby-original.webp'
+  const backgroundUrl = (edition) => edition === 'thrones' ? '/ui/lobby-thrones.webp' : '/ui/lobby-original.webp'
   const en = language === 'en'
   const text = en ? {
     eyebrow: 'A card game of unfortunate lives', subtitle: '', family: 'Choose your family', bots: 'Number of bots', mode: 'Choose your edition', original: 'Original Gloom', originalNote: 'The classic deck', thrones: 'Gloom of Thrones', thronesNote: 'Card set coming soon', start: 'Enter the séance', quote: '“There is no fate but what we make for ourselves.\nUnfortunately, ours is usually dreadful.”', hash: 'build'
