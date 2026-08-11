@@ -160,6 +160,16 @@ const visibleIcon = (character) => character.modifiers.reduce((icon, card) => {
 const canPlayDeathOn = (character, death = null, heartOverride = false) => Boolean(character?.alive && ((heartOverride && visibleIcon(character) === 'heart') || sumPoints(visiblePoints(character)) < 0) && (!death?.cannotOn || visibleIcon(character) !== death.cannotOn))
 const deathBonus = (character, death = [...character.modifiers].reverse().find((card) => card.type === 'death')) => death?.bonusSymbols?.includes(visibleIcon(character)) ? -10 : 0
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
+const victoryLines = [
+  'A most unfortunate victory.',
+  'The séance is yours; everyone else suffered more.',
+  'A triumph of exquisite misfortune.',
+  'You won. Your family can now mourn in peace.',
+  'The last family standing inherits the misery.',
+  'Against all odds, you were the worst at dying.',
+  'Your rivals are gone, and your dignity remains questionable.',
+  'Fortune smiled. Briefly. Suspiciously.',
+]
 const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
 
 function shuffleDeck(cards) {
@@ -349,7 +359,7 @@ function finalizeGame(state) {
   if (!eliminated || state.gameOver) return { ...state, history }
   // Family Value decides the winner, including eliminated families: -100 beats -70.
   const winner = [...state.players].sort((a, b) => familyValue(a) - familyValue(b))[0]
-  return { ...state, history, gameOver: true, winnerId: winner.id, active: '', selectedCard: null, targeting: false, target: null, log: [`${winner.name} wins the séance with Family Value ${familyValue(winner)}.`, ...state.log] }
+  return { ...state, history, gameOver: true, winnerId: winner.id, victoryLine: victoryLines[Math.floor(Math.random() * victoryLines.length)], active: '', selectedCard: null, targeting: false, target: null, log: [`${winner.name} wins the séance with Family Value ${familyValue(winner)}.`, ...state.log] }
 }
 
 function App() {
@@ -724,7 +734,7 @@ function App() {
 function GameOver({ game, onRestart }) {
   const winner = game.players.find((player) => player.id === game.winnerId) || game.players[0]
   const familyName = (player) => game.mode === 'thrones' ? families[player.family].thronesName : families[player.family].name
-  return <main className="results-shell"><section className="results-card"><span className="eyebrow">The séance is complete</span><h1>{winner.name} wins</h1><p className="results-family">{familyName(winner)} · Family Value {familyValue(winner)}</p><FamilyValueChart game={game} /><div className="results-scores">{game.players.map((player) => <div className={player.id === winner.id ? 'winner-score' : ''} key={player.id}><span>{player.name}</span><strong>{familyValue(player)}</strong></div>)}</div><button className="primary-button results-button" onClick={onRestart}>Play again</button></section></main>
+  return <main className="results-shell"><section className="results-card"><span className="eyebrow">The séance is complete</span><h1>{winner.name} wins</h1><p className="results-congrats">{game.victoryLine || 'A most unfortunate victory.'}</p><p className="results-family">{familyName(winner)} · Family Value {familyValue(winner)}</p><FamilyValueChart game={game} /><div className="results-scores">{game.players.map((player) => <div className={player.id === winner.id ? 'winner-score' : ''} key={player.id}><span>{player.name}</span><strong>{familyValue(player)}</strong></div>)}</div><button className="primary-button results-button" onClick={onRestart}>Play again</button></section></main>
 }
 
 function FamilyValueChart({ game }) {
