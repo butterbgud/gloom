@@ -64,6 +64,7 @@ const allCards = [...modifiers, ...events, ...deaths]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
 const isPointNullifyingDeath = (card) => card.type === 'death' && card.title === 'died without cares'
 const canPlayDeathOn = (character) => Boolean(character?.alive && score(character) < 0)
+const deathPointValues = { 'was torn limb from limb': 10, 'was torn limb to limb': 10 }
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
 const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
 
@@ -105,6 +106,8 @@ function visiblePoints(character) {
 }
 
 function score(character) {
+  const death = [...character.modifiers].reverse().find((card) => card.type === 'death')
+  if (death) return deathPointValues[death.title] || 0
   return visiblePoints(character).reduce((total, point) => total + point, 0)
 }
 
