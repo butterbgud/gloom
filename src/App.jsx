@@ -229,6 +229,10 @@ function App() {
     const timer = setTimeout(runBotTurn, 650)
     return () => clearTimeout(timer)
   }, [game.active, game.turn, screen])
+  useEffect(() => {
+    if (screen === 'lobby' || game.gameOver || !game.players.some((player) => player.chars.every((character) => !character.alive))) return
+    setGame((current) => finalizeGame(current))
+  }, [game, screen])
   const [showRules, setShowRules] = useState(false)
   const [showChronicle, setShowChronicle] = useState(false)
   if (screen === 'lobby') return <Lobby language={language} onLanguage={setLanguage} mode={mode} onMode={setMode} chosenFamily={chosenFamily} onChooseFamily={setChosenFamily} botCount={botCount} onBotCount={setBotCount} onStart={() => { setGame(makeGame(chosenFamily, mode, botCount)); setScreen('table') }} />
