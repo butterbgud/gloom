@@ -170,6 +170,7 @@ const victoryLines = [
   'Your rivals are gone, and your dignity remains questionable.',
   'Fortune smiled. Briefly. Suspiciously.',
 ]
+const comebackDefeatLine = 'Snatched the defeat from the jaws of victory!'
 const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
 
 function shuffleDeck(cards) {
@@ -359,7 +360,8 @@ function finalizeGame(state) {
   if (!eliminated || state.gameOver) return { ...state, history }
   // Family Value decides the winner, including eliminated families: -100 beats -70.
   const winner = [...state.players].sort((a, b) => familyValue(a) - familyValue(b))[0]
-  return { ...state, history, gameOver: true, winnerId: winner.id, victoryLine: victoryLines[Math.floor(Math.random() * victoryLines.length)], active: '', selectedCard: null, targeting: false, target: null, log: [`${winner.name} wins the séance with Family Value ${familyValue(winner)}.`, ...state.log] }
+  const playerWasAhead = winner.id !== 'player' && history.some((entry) => entry.values.player !== undefined && entry.values[winner.id] !== undefined && entry.values.player < entry.values[winner.id])
+  return { ...state, history, gameOver: true, winnerId: winner.id, victoryLine: playerWasAhead ? comebackDefeatLine : victoryLines[Math.floor(Math.random() * victoryLines.length)], active: '', selectedCard: null, targeting: false, target: null, log: [`${winner.name} wins the séance with Family Value ${familyValue(winner)}.`, ...state.log] }
 }
 
 function App() {
