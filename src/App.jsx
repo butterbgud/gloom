@@ -261,6 +261,7 @@ function App() {
       }
       const livingChars = (player) => player.chars.filter((character) => character.alive)
       const weakest = (characters) => [...characters].sort((a, b) => score(a) - score(b))[0]
+      const negativeTarget = (characters) => [...characters].sort((a, b) => a.modifiers.length - b.modifiers.length || score(a) - score(b))[0]
       const pointLeaderFor = (card) => [...livingChars(opponent)].sort((a, b) => {
         const value = (character) => card.points.reduce((total, point, index) => total + (point > 0 ? visiblePoints(character)[index] : 0), 0)
         return value(b) - value(a) || score(b) - score(a)
@@ -292,7 +293,7 @@ function App() {
         const negativeModifier = botHand.find((card) => card.type === 'modifier' && card.points.some((point) => point < 0))
         const modifier = negativeModifier || botHand.find((card) => card.type === 'modifier' && sumPoints(card.points) !== 0)
         if (modifier) {
-          const target = modifier.points.some((point) => point < 0) ? weakest(livingChars(rival)) : pointLeaderFor(modifier)
+          const target = modifier.points.some((point) => point < 0) ? negativeTarget(livingChars(rival)) : pointLeaderFor(modifier)
           if (target) {
             target.modifiers.push(modifier)
             removeCard(modifier)
