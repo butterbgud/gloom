@@ -47,27 +47,71 @@ const events = [
   ['Twist of Fate', 'Replace a character’s top Modifier with one from your hand.'], ['A Chance to Begin Again', 'Discard all Modifiers from one living character.'], ['An Unpleasant Surprise', 'Remove the top Modifier from one living character.'],
 ].map(([title, text], index) => ({ id: `event-${index}`, type: 'event', title, text, asset: index < 11 ? `/assets/event-e${index + 1}.webp` : null, pathos: 0 }))
 
+// Keep this data aligned with the Modifier table in GLOOM_CARDS.md. `null` is
+// transparent (reveals the card below); 0 is a real blank circle that masks it.
 const modifierSeed = [
-  ['was blessed by a Bishop', 0, 0, 20, 'heart'], ['found love on the lake', 0, 0, 15, 'heart'], ['was married magnificently', 0, 0, 15, 'heart'], ['was wondrously well wed', 0, 0, 20, 'heart'],
-  ['was delighted by ducklings', 10, 0, 0, 'duck'], ['was crippled by creditors', 0, -20, 0, 'coin'], ['was written out of the will', 0, -20, 0, 'coin'], ['was clever at cards', 15, 0, 0, 'coin'],
-  ['was swindled by a salesman', 0, -10, 0, 'coin'], ['landed a legacy', 0, 15, 0, 'coin'], ['stole from a stiff', 0, 0, -15, 'coin'], ['was perturbed by pudding', -5, -5, 0, 'goblet'],
-  ['found maggots in the meat', -15, 0, 0, 'goblet'], ['was ruined by rum', -15, 0, -10, 'goblet'], ['found fame at a feast', 0, 10, 0, 'goblet'], ['was sickened by salmon', 0, -10, 0, 'goblet'],
-  ['was diverted by drink', 10, 0, 0, 'goblet'], ['was driven to drink', -15, 0, 0, 'goblet'], ['starved in a storm', -10, -10, 0, 'goblet'], ['was plagued by the pox', -15, -15, 0, 'skull'],
-  ['was distressed by dysentery', -15, -10, 0, 'skull'], ['was greeted by ghosts', -10, 0, -20, 'skull'], ['was hunted by horrors', 0, -20, -20, 'skull'], ['was galled by gangrene', -15, 0, 0, 'skull'],
-  ['was jinxed by gypsies', -15, -15, 0, 'skull'], ['was pestered by poltergeists', 0, -10, -10, 'skull'], ['grew old without grace', -20, 0, 0, 'skull'], ['contracted consumption', -15, 0, -15, 'skull'],
-  ['went mildly mad', -10, 0, 0, 'skull'], ['was burdened by boils', 0, 0, -10, 'skull'], ['suffered from sores', -15, 0, -15, 'skull'], ['was mauled by a manatee', -20, 0, 0, 'bat'],
-  ['was taunted by tigers', -20, -10, 0, 'bat'], ['was pierced by porcupines', -10, -5, 0, 'bat'], ['was marooned on the moors', -10, 0, 0, 'bat'], ['was terrified by topiary', -20, 0, 0, 'bat'],
-  ['was charmed by the circus', 10, 0, 0, 'bat'], ['was wounded by wasps', 0, -15, 0, 'bat'], ['was startled by snakes', -10, -10, 0, 'bat'], ['was pursued by poodles', -15, 0, 0, 'bat'],
-  ['was menaced by mice', 0, -15, 0, 'bat'], ['was popular in parliament', 0, 15, 0, 'none'], ['had a picnic in the park', 10, 5, 0, 'none'], ['was chased by children', -10, 0, 0, 'none'],
-  ['was scarred by scandals', 0, -25, 0, 'none'], ['was beaten by beggars', -15, 0, 0, 'none'], ['was shunned by society', -15, -15, -15, 'none'], ['broke many bones', -20, 0, 0, 'none'],
-  ['was put into prison', -20, 0, 0, 'none'], ['was trapped on a train', -20, 0, 0, 'none'], ['fell down a well', -10, 0, 0, 'none'], ['was cursed by the queen', 0, -15, -20, 'none'],
-  ['was mocked by midgets', -10, 0, 0, 'none'], ['was the toast of the town', 0, 15, 0, 'none'], ['was chastised by the church', -10, 0, -15, 'none'],
+  ['was distressed by dysentery', [-15, -10, null], 'skull', 'm1.webp'],
+  ['was disgraced at the dance', [null, -20, null], 'blank', 'm2.webp'],
+  ['was married magnificently', [0, null, 15], 'heart', 'm59.webp'],
+  ['had a picnic in the park', [10, 5, null], 'none', 'm3.webp'],
+  ['was cursed by the queen', [null, -15, -20], 'none', 'm4.webp'],
+  ['broke many bones', [-20, null, null], 'none', 'm5.webp'],
+  ['went mildly mad', [-10, null, null], 'skull', 'm6.webp'],
+  ['was burdened by boils', [null, null, -10], 'skull', 'm7.webp'],
+  ['was written out of the will', [null, -20, null], 'coin', 'm17.webp'],
+  ['was wondrously well wed', [0, null, 20], 'heart', 'm8.webp'],
+  ['was clever at cards', [15, null, null], 'coin', 'm57.webp'],
+  ['was perturbed by pudding', [-5, -5, null], 'goblet', 'm9.webp'],
+  ['was swindled by a salesman', [null, -10, null], 'coin', 'm10.webp'],
+  ['was pierced by porcupines', [-10, -5, null], 'bat', 'm11.webp'],
+  ['was diverted by drink', [10, null, null], 'goblet', 'm12.webp'],
+  ['found maggots in the meat', [-15, null, null], 'goblet', 'm58.webp'],
+  ['was jinxed by gypsies', [-15, -15, null], 'skull', 'm13.webp'],
+  ['was taunted by tigers', [-20, -10, null], 'bat', 'm14.webp'],
+  ['was marooned on the moors', [-10, null, null], 'bat', 'm16.webp'],
+  ['was widowed at the wedding', [null, null, -25], 'none', 'm18.webp'],
+  ['was wounded by wasps', [null, -15, null], 'bat', 'm19.webp'],
+  ['was galled by gangrene', [-15, null, null], 'skull', 'm20.webp'],
+  ['was terrified by topiary', [-20, null, null], 'bat', 'm21.webp'],
+  ['grew old without grace', [-20, null, null], 'skull', 'm22.webp'],
+  ['was sickened by salmon', [null, -10, null], 'goblet', 'm23.webp'],
+  ['was charmed by the circus', [10, null, null], 'bat', 'm24.webp'],
+  ['was chased by children', [-10, null, null], 'none', 'm25.webp'],
+  ['was pestered by poltergeists', [null, -10, -10], 'skull', 'm26.webp'],
+  ['was pursued by poodles', [-15, null, null], 'bat', 'm27.webp'],
+  ['was ruined by rum', [-15, null, -10], 'goblet', 'm28.webp'],
+  ['was scarred by scandals', [null, -25, null], 'none', 'm29.webp'],
+  ['found love on the lake', [0, 15, null], 'heart', 'm30.webp'],
+  ['was chastised by the church', [-10, null, -15], 'blank', 'm31.webp'],
+  ['was blessed by a Bishop', [0, 20, null], 'heart', 'm32.webp'],
+  ['was trapped on a train', [-20, null, null], 'skull', 'm33.webp'],
+  ['slept without sorrows', [null, 10, null], 'none', 'm34.webp'],
+  ['contracted consumption', [-15, null, -15], 'skull', 'm35.webp'],
+  ['was crippled by creditors', [null, -20, null], 'coin', 'm36.webp'],
+  ['was the toast of the town', [null, 15, null], 'none', 'm37.webp'],
+  ['was greeted by ghosts', [-10, null, -20], 'skull', 'm38.webp'],
+  ['landed a legacy', [null, 15, null], 'coin', 'm39.webp'],
+  ['was startled by snakes', [-10, -10, null], 'bat', 'm56.webp'],
+  ['was beaten by beggars', [-15, null, null], 'none', 'm40.webp'],
+  ['found fame at a feast', [0, 10, null], 'goblet', 'm41.webp'],
+  ['was driven to drink', [-15, null, null], 'goblet', 'm43.webp'],
+  ['was mocked by midgets', [-10, null, null], 'none', 'm44.webp'],
+  ['was menaced by mice', [null, -15, null], 'bat', 'm45.webp'],
+  ['was delighted by ducklings', [10, 0, null], 'duck', 'm46.webp'],
+  ['was plagued by the pox', [-15, -15, null], 'skull', 'm47.webp'],
+  ['was hunted by horrors', [null, -20, -20], 'skull', 'm48.webp'],
+  ['was mauled by a manatee', [-20, null, null], 'bat', 'm49.webp'],
+  ['was put into prison', [-20, null, null], 'none', 'm60.webp'],
+  ['starved in a storm', [-10, -10, null], 'goblet', 'm50.webp'],
+  ['was popular in parliament', [null, 15, null], 'none', 'm51.webp'],
+  ['fell down a well', [-10, null, null], 'none', 'm55.webp'],
+  ['suffered from sores', [-15, null, -15], 'skull', 'm52.webp'],
+  ['stole from a stiff', [null, null, -15], 'coin', 'm53.webp'],
+  ['was shunned by society', [-15, -15, -15], 'none', 'm54.webp'],
 ]
-const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) => {
-  const number = index + 1
-  const asset = number <= 54 ? `/assets/m${number}.webp` : null
-  return { id: `modifier-${index}`, type: 'modifier', title, points: [top, middle, bottom], icon, asset, flavor: 'A fresh misfortune takes root.' }
-})
+const modifiers = modifierSeed.map(([title, points, icon, asset], index) => ({
+  id: `modifier-${index}`, type: 'modifier', title, points, icon, asset: `/assets/${asset}`, flavor: 'A fresh misfortune takes root.'
+}))
 
 const allCards = [...modifiers, ...events, ...deathsWithAssets]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
@@ -115,18 +159,20 @@ function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
 function visiblePoints(character) {
   return character.modifiers.reduce((visible, card) => {
     if (!card.points) return visible
-    return visible.map((point, index) => card.points[index] || point)
+    return visible.map((point, index) => card.points[index] === null ? point : card.points[index])
   }, [0, 0, 0])
 }
+
+const sumPoints = (points) => points.reduce((total, point) => total + (point ?? 0), 0)
 
 function score(character) {
   const death = [...character.modifiers].reverse().find((card) => card.type === 'death')
   if (death) return deathPointValues[death.title] || 0
-  return visiblePoints(character).reduce((total, point) => total + point, 0)
+  return sumPoints(visiblePoints(character))
 }
 
 function familyValue(player) {
-  return player.chars.filter((character) => !character.alive).reduce((total, character) => total + visiblePoints(character).reduce((sum, point) => sum + point, 0), 0)
+  return player.chars.filter((character) => !character.alive).reduce((total, character) => total + sumPoints(visiblePoints(character)), 0)
 }
 
 function App() {
@@ -212,7 +258,7 @@ function App() {
         }
 
         const negativeModifier = botHand.find((card) => card.type === 'modifier' && card.points.some((point) => point < 0))
-        const modifier = negativeModifier || botHand.find((card) => card.type === 'modifier' && card.points.reduce((a, b) => a + b, 0) !== 0)
+        const modifier = negativeModifier || botHand.find((card) => card.type === 'modifier' && sumPoints(card.points) !== 0)
         if (modifier) {
           const target = modifier.points.some((point) => point < 0) ? weakest(livingChars(rival)) : pointLeaderFor(modifier)
           if (target) {
@@ -230,7 +276,7 @@ function App() {
           continue
         }
 
-        const discard = botHand.find((card) => card.type === 'death') || [...botHand].sort((a, b) => (a.type === 'modifier' ? a.points.reduce((x, y) => x + y, 0) : 0) - (b.type === 'modifier' ? b.points.reduce((x, y) => x + y, 0) : 0))[0]
+        const discard = botHand.find((card) => card.type === 'death') || [...botHand].sort((a, b) => (a.type === 'modifier' ? sumPoints(a.points) : 0) - (b.type === 'modifier' ? sumPoints(b.points) : 0))[0]
         removeCard(discard)
         next.log.unshift(`${rival.name} discarded “${discard.title}”. The rival made a quiet, regrettable choice.`)
       }
@@ -398,12 +444,12 @@ function FamilyBoard({ player, mode, active, target, onTarget, targetable, hideD
 
 function CharacterCard({ character, family, selected, targetable, onClick }) {
   const total = score(character)
-  return <button className={`character-card ${character.alive ? '' : 'dead'} ${targetable ? 'targetable' : ''} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className={`character-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}>{character.modifiers.length > 0 && <strong>{total > 0 ? '+' : ''}{total}</strong>}</div><div className="portrait">{character.alive ? character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span> : <img src="/assets/dead.webp" alt={`${character.name} dead`} />}</div>{character.modifiers.map((modifier, index) => modifier.asset ? <img key={modifier.id} className={`character-overlay ${modifier.type}`} src={modifier.asset} alt={modifier.title} style={{ zIndex: index + 2 }} /> : <div key={modifier.id} className={`character-overlay modifier-fallback ${modifier.type}`} style={{ zIndex: index + 2 }}><strong>{modifier.title}</strong>{modifier.points && <div>{modifier.points.map((point, pointIndex) => <span key={pointIndex}>{point || '—'}</span>)}</div>}</div>)}</button>
+  return <button className={`character-card ${character.alive ? '' : 'dead'} ${targetable ? 'targetable' : ''} ${selected ? 'targeted' : ''}`} onClick={onClick}><div className={`character-worth ${total < 0 ? 'negative' : total > 0 ? 'positive' : ''}`}>{character.modifiers.length > 0 && <strong>{total > 0 ? '+' : ''}{total}</strong>}</div><div className="portrait">{character.alive ? character.portrait ? <img src={`/assets/${character.portrait}`} alt={character.name} /> : <span>{character.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span> : <img src="/assets/dead.webp" alt={`${character.name} dead`} />}</div>{character.modifiers.map((modifier, index) => modifier.asset ? <img key={modifier.id} className={`character-overlay ${modifier.type}`} src={modifier.asset} alt={modifier.title} style={{ zIndex: index + 2 }} /> : <div key={modifier.id} className={`character-overlay modifier-fallback ${modifier.type}`} style={{ zIndex: index + 2 }}><strong>{modifier.title}</strong>{modifier.points && <div>{modifier.points.map((point, pointIndex) => <span key={pointIndex}>{point === null ? '—' : point}</span>)}</div>}</div>)}</button>
 }
 
 function HandCard({ card, selected, onClick }) {
   const typeLabel = card.type === 'modifier' ? 'MODIFIER' : card.type === 'death' ? 'UNTIMELY DEATH' : 'EVENT'
-  return <button onClick={onClick} className={`hand-card ${card.type} ${card.asset ? 'asset-card' : ''} ${selected ? 'selected' : ''}`}>{card.asset && <img className="hand-card-art" src={card.asset} alt={card.title} />}{!card.asset && <><div className="hand-card-top"><span>{typeLabel}</span><b>{card.type === 'modifier' ? '✦' : card.type === 'death' ? '†' : '♢'}</b></div><strong>{card.title}</strong>{card.points && <div className="mini-points">{card.points.map((p, i) => <span key={i} className={p < 0 ? 'bad' : p > 0 ? 'good' : ''}>{p || '—'}</span>)}</div>}<small>{card.text || card.flavor}</small></>}</button>
+  return <button onClick={onClick} className={`hand-card ${card.type} ${card.asset ? 'asset-card' : ''} ${selected ? 'selected' : ''}`}>{card.asset && <img className="hand-card-art" src={card.asset} alt={card.title} />}{!card.asset && <><div className="hand-card-top"><span>{typeLabel}</span><b>{card.type === 'modifier' ? '✦' : card.type === 'death' ? '†' : '♢'}</b></div><strong>{card.title}</strong>{card.points && <div className="mini-points">{card.points.map((p, i) => <span key={i} className={p < 0 ? 'bad' : p > 0 ? 'good' : ''}>{p === null ? '—' : p}</span>)}</div>}<small>{card.text || card.flavor}</small></>}</button>
 }
 
 export default App
