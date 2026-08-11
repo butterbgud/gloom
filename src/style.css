@@ -189,3 +189,14 @@ button { font: inherit; color: inherit; }
   .card-play-preview .hand-card { width: 190px; min-height: 260px; }
   .card-play-preview .hand-card-art { height: 260px; min-height: 260px; }
 }
+
+/* Keep all five characters in the available board width. Every placed card
+   remains the exact same size as its character through the shared box. */
+.character-row { grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; min-width: 0; overflow: visible; }
+.character-card { width: 100%; min-width: 0; height: auto; min-height: 0; aspect-ratio: 240 / 326; }
+.character-overlay { width: 100%; min-width: 0; height: 100%; min-height: 0; }
+@media (max-width: 700px) {
+  .character-row { gap: 2px; }
+  .character-card { width: 100%; min-width: 0; height: auto; min-height: 0; }
+  .character-overlay { width: 100%; min-width: 0; height: 100%; min-height: 0; }
+}
