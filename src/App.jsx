@@ -332,7 +332,10 @@ function App() {
           continue
         }
 
-        const discard = botHand.find((card) => card.type === 'death') || [...botHand].sort((a, b) => (a.type === 'modifier' ? sumPoints(a.points) : 0) - (b.type === 'modifier' ? sumPoints(b.points) : 0))[0]
+        // Keep a single Death in hand until it becomes playable; discard other
+        // cards first instead of treating every unplayable Death as junk.
+        const discardPool = botHand.filter((card) => card.type !== 'death')
+        const discard = [...(discardPool.length ? discardPool : botHand)].sort((a, b) => (a.type === 'modifier' ? sumPoints(a.points) : 0) - (b.type === 'modifier' ? sumPoints(b.points) : 0))[0]
         removeCard(discard)
         next.log.unshift(`${rival.name} discarded “${discard.title}”. The rival made a quiet, regrettable choice.`)
       }
