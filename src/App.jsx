@@ -72,7 +72,7 @@ const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) =
 const allCards = [...modifiers, ...events, ...deathsWithAssets]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
 const isPointNullifyingDeath = (card) => card.type === 'death' && card.title === 'died without cares'
-const canPlayDeathOn = (character) => Boolean(character?.alive && score(character) < 0)
+const canPlayDeathOn = (character) => Boolean(character?.alive)
 const deathPointValues = {
   'fell from on high': -10, 'was eaten by bears': -10, 'was baked into a pie': -10, 'died of despair': -15,
   'was slain by an heir': -10, 'was devoured by weasels': -10, 'was choked by a tie': -10, 'was pushed down the stairs': -10,
@@ -323,7 +323,7 @@ function App() {
     setBugReportStatus('Gloom bug report copied')
     window.setTimeout(() => setBugReportStatus(''), 3500)
   }
-  const targetHint = deathBlocked ? 'Untimely Deaths must be your first action.' : !game.targeting ? 'Select Play, then choose an eligible character.' : selected?.type === 'death' ? 'Choose a living character with negative Self-Worth.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
+  const targetHint = deathBlocked ? 'Untimely Deaths must be your first action.' : !game.targeting ? 'Select Play, then choose an eligible character.' : selected?.type === 'death' ? 'Choose any living character.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
 
   return <div className="app-shell">
     <header className="topbar">
