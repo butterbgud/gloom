@@ -372,6 +372,8 @@ function App() {
   const [mode, setMode] = useState('original')
   const [botCount, setBotCount] = useState(1)
   const [bugReportStatus, setBugReportStatus] = useState('')
+  const [bugOpen, setBugOpen] = useState(false)
+  const [bugText, setBugText] = useState('')
   useEffect(() => {
     if (game.gameOver || game.pendingEvent || !game.active.startsWith('bot-') || screen === 'lobby') return undefined
     const timer = setTimeout(runBotTurn, 650)
@@ -700,21 +702,31 @@ function App() {
   }
 
   const reset = () => { setGame(makeGame(chosenFamily, mode, botCount)); setScreen('lobby') }
-  const reportBug = async () => {
-    const description = window.prompt('What went wrong?')
-    if (!description?.trim()) return
-    const report = `[GLOOM BUG REPORT]\nGame: Gloom original prototype\nTurn: ${game.turn}\nActive: ${activePlayer.name}\nDescription: ${description.trim()}`
-    try { await navigator.clipboard?.writeText(report) } catch {}
-    setBugReportStatus('Gloom bug report copied')
-    window.setTimeout(() => setBugReportStatus(''), 3500)
+  const reportBug = () => { setBugReportStatus(''); setBugOpen(true) }
+  const submitBug = async () => {
+    setBugReportStatus('sending')
+    const debug = {
+      turn: game.turn, active: game.active, activeName: activePlayer.name, plays: game.plays, playLimit: game.playLimit,
+      selectedCard: selected ? { id: selected.id, type: selected.type, title: selected.title } : null,
+      targeting: game.targeting, target: game.target, pendingEvent: game.pendingEvent,
+      gameOver: game.gameOver, winnerId: game.winnerId, deck: game.deck.length,
+      handSize: game.hand.length, botHandSizes: Object.fromEntries(Object.entries(game.botHands).map(([id, hand]) => [id, hand.length])),
+      players: game.players.map((player) => ({ id: player.id, name: player.name, alive: player.chars.filter((character) => character.alive).length, total: player.chars.length, familyValue: familyValue(player), characters: player.chars.map((character) => ({ name: character.name, alive: character.alive, score: score(character), modifiers: character.modifiers.map((card) => card.title) })) })),
+    }
+    try {
+      const response = await fetch('/api/bugreport', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ project: 'gloom', text: bugText, version: BUILD_VERSION, url: window.location.href, userAgent: navigator.userAgent, history: game.log.slice(-30), debug, game: { turn: game.turn, active: activePlayer.name, deck: game.deck.length, pending: game.pendingEvent?.card?.title || null } }) })
+      if (!response.ok) throw new Error('Bug report request failed')
+      setBugReportStatus('sent'); setBugText('')
+    } catch { setBugReportStatus('failed') }
   }
   const targetHint = deathBlocked ? 'Untimely Deaths must be your first action.' : !game.targeting ? 'Select Play, then choose an eligible character.' : selected?.title === 'An Unpleasant Surprise' ? 'Choose a living character to lose its top Modifier.' : selected?.title === 'A Second Chance' ? 'Choose a dead character to resurrect.' : selected?.type === 'death' ? 'Choose any living character.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
 
   return <div className="app-shell">
     <header className="topbar">
       <div className="brand"><span className="brand-mark">✠</span><div className="header-turn"><span>TURN</span><strong>{game.turn}</strong><small>{activePlayer.name}</small></div><div className="header-plays"><span>PLAYS</span><strong>{Math.max(0, (game.playLimit || 2) - game.plays)}</strong></div><div className="header-deck"><span>DECK</span><strong>{game.deck.length}</strong></div><div className="header-tools"><button className="header-tool" onClick={() => setShowChronicle((value) => !value)} aria-label="Chronicle">H</button><button className="header-tool" onClick={() => setShowRules(true)} aria-label="Quick rules">?</button></div></div>
-      <div className="top-actions">{bugReportStatus && <span className="bug-report-status">{bugReportStatus}</span>}<button className="ghost-button bug-button" onClick={reportBug} aria-label="Report bug">B</button></div>
+      <div className="top-actions">{bugReportStatus === 'sent' && <span className="bug-report-status">Report sent</span>}{bugReportStatus === 'failed' && <span className="bug-report-status bug-report-failed">Report failed</span>}<button className="ghost-button bug-button" onClick={reportBug} aria-label="Report bug">B</button></div>
     </header>
+    {bugOpen && <div className="bug-modal" onClick={() => bugReportStatus !== 'sending' && setBugOpen(false)}><form onSubmit={(event) => { event.preventDefault(); submitBug() }} onClick={(event) => event.stopPropagation()}><h2>Report a bug</h2><p>Your note will be sent with recent history and a technical snapshot.</p><textarea autoFocus value={bugText} onChange={(event) => setBugText(event.target.value)} placeholder="What happened?" maxLength="1600" /><div className="bug-modal-status">{bugReportStatus === 'sent' ? 'Report sent. Thank you.' : bugReportStatus === 'failed' ? 'Could not send the report.' : ''}</div><div><button type="button" className="ghost-button" onClick={() => setBugOpen(false)} disabled={bugReportStatus === 'sending'}>Cancel</button><button type="submit" className="primary-button" disabled={bugReportStatus === 'sending' || bugReportStatus === 'sent'}>{bugReportStatus === 'sending' ? 'Sending…' : 'Send report'}</button></div></form></div>}
     {game.pendingEvent && <div className="event-announcement" role="dialog" aria-live="assertive"><span className="eyebrow">Untimely Event</span><HandCard card={game.pendingEvent.card} selected /><strong>{game.pendingEvent.card.title}</strong><small>{game.pendingEvent.card.text}</small>{game.hand.some((card) => card.type === 'event' && card.title === 'Smoke and Mirrors') && <button className="primary-button" onClick={cancelPendingEvent}>Cancel with Smoke and Mirrors</button>}<small className="event-countdown">The event resolves in five seconds.</small></div>}
     <main className="layout">
       <section className="game-column">

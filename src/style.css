@@ -145,6 +145,14 @@ button { font: inherit; color: inherit; }
 .event-announcement > strong { color: #eadccd; font: 600 15px 'Cinzel', serif; }
 .event-announcement > small { color: #a69496; font-size: 10px; line-height: 1.4; }
 .event-announcement .event-countdown { color: #c88a91; }
+.bug-modal { position: fixed; z-index: 400; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(7, 5, 9, .72); }
+.bug-modal form { width: min(460px, 100%); padding: 20px; border: 1px solid #68404b; background: #211720; box-shadow: 0 20px 70px rgba(0,0,0,.7); }
+.bug-modal h2 { margin: 0 0 6px; font: 600 20px 'Cinzel', serif; color: #eadccd; }
+.bug-modal p { margin: 0 0 13px; color: #a69496; font-size: 10px; }
+.bug-modal textarea { width: 100%; min-height: 130px; resize: vertical; padding: 10px; border: 1px solid #493846; background: #17131c; color: #eadccd; font: 12px/1.45 inherit; box-sizing: border-box; }
+.bug-modal-status { min-height: 18px; padding-top: 8px; color: #c88a91; font-size: 10px; }
+.bug-modal form > div:last-child { display: flex; justify-content: flex-end; gap: 8px; }
+.bug-report-failed { color: #d28d8d; }
 .character-card.targetable { filter: drop-shadow(0 0 7px rgba(194, 106, 115, .78)); }
 .character-card.targetable:hover, .character-card.targetable.targeted { filter: drop-shadow(0 0 12px rgba(235, 142, 150, .98)); }
 .asset-inspector { flex-wrap: wrap; justify-content: center; }
