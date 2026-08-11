@@ -211,8 +211,8 @@ function finalizeGame(state) {
   else history.push({ turn: state.turn, values })
   const eliminated = state.players.some((player) => player.chars.every((character) => !character.alive))
   if (!eliminated || state.gameOver) return { ...state, history }
-  const survivors = state.players.filter((player) => player.chars.some((character) => character.alive))
-  const winner = [...(survivors.length ? survivors : state.players)].sort((a, b) => familyValue(a) - familyValue(b))[0]
+  // Family Value decides the winner, including eliminated families: -100 beats -70.
+  const winner = [...state.players].sort((a, b) => familyValue(a) - familyValue(b))[0]
   return { ...state, history, gameOver: true, winnerId: winner.id, active: '', selectedCard: null, targeting: false, target: null, log: [`${winner.name} wins the séance with Family Value ${familyValue(winner)}.`, ...state.log] }
 }
 
@@ -334,10 +334,8 @@ function App() {
 
         // Keep a single Death in hand until it becomes playable; discard other
         // cards first instead of treating every unplayable Death as junk.
-        const discardPool = botHand.filter((card) => card.type !== 'death')
-        const discard = [...(discardPool.length ? discardPool : botHand)].sort((a, b) => (a.type === 'modifier' ? sumPoints(a.points) : 0) - (b.type === 'modifier' ? sumPoints(b.points) : 0))[0]
-        removeCard(discard)
-        next.log.unshift(`${rival.name} discarded “${discard.title}”. The rival made a quiet, regrettable choice.`)
+        next.log.unshift(`${rival.name} passed. The rival made a quiet, regrettable choice.`)
+        break
       }
 
       next.botHands[rival.id] = botHand
