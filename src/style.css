@@ -145,7 +145,7 @@ button { font: inherit; color: inherit; }
 .inspector-card-art { width: min(260px, 100%); max-height: 330px; object-fit: contain; border: 1px solid #86505b; box-shadow: 0 12px 28px #08070b; }
 .asset-inspector .inspector-actions { flex: 1 1 140px; }
 .character-card { overflow: hidden; }
-.character-worth { position: relative; z-index: 100; }
+.character-worth { position: absolute; top: 8px; right: 8px; z-index: 100; min-height: 22px; padding: 2px 4px; text-align: right; text-shadow: 0 1px 3px #08070b; }
 .character-overlay { position: absolute; z-index: 2; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; object-fit: fill; }
 .hand-fan { height: 178px; min-width: 124px; }
 .hand-fan-card, .hand-fan-card .hand-card { width: 124px; }
@@ -201,5 +201,6 @@ button { font: inherit; color: inherit; }
   .character-row { gap: 0; }
   .character-card { width: calc(100% + 8px); min-width: 0; height: auto; min-height: 0; margin-left: -4px; }
   .character-card:first-child { margin-left: 0; }
+  .character-worth { top: 4px; right: 4px; min-height: 18px; padding: 1px 2px; }
   .character-overlay { width: 100%; min-width: 0; height: 100%; min-height: 0; }
 }
