@@ -63,6 +63,7 @@ const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) =
 const allCards = [...modifiers, ...events, ...deaths]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
 const isPointNullifyingDeath = (card) => card.type === 'death' && card.title === 'died without cares'
+const canPlayDeathOn = (character) => Boolean(character?.alive && score(character) < 0)
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
 const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
 
@@ -132,7 +133,7 @@ function App() {
   const setSelection = (card) => {
     setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, targeting: false, target: null }))
   }
-  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || score(character) < 0))
+  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || canPlayDeathOn(character)))
   const chooseTarget = (playerId, charId) => {
     const character = game.players.find((player) => player.id === playerId)?.chars.find((candidate) => candidate.id === charId)
     if (!character || !canTargetCharacter(character)) return
@@ -171,9 +172,17 @@ function App() {
       })[0]
 
       for (let action = 0; action < 2 && botHand.length; action += 1) {
-        const death = botHand.find((card) => isPointNullifyingDeath(card) && livingChars(opponent).some((character) => score(character) < 0))
+        const deathCards = botHand.filter((card) => card.type === 'death')
+        if (deathCards.length > 1) {
+          const excessDeath = deathCards.find((card) => !isPointNullifyingDeath(card)) || deathCards[1]
+          removeCard(excessDeath)
+          next.log.unshift(`${rival.name} discarded an excess Untimely Death.`)
+          continue
+        }
+
+        const death = botHand.find((card) => isPointNullifyingDeath(card) && livingChars(opponent).some(canPlayDeathOn))
         if (death) {
-          const target = weakest(livingChars(opponent).filter((character) => score(character) < 0))
+          const target = weakest(livingChars(opponent).filter(canPlayDeathOn))
           target.alive = false
           target.modifiers.push(death)
           removeCard(death)
@@ -181,7 +190,8 @@ function App() {
           continue
         }
 
-        const modifier = botHand.find((card) => card.type === 'modifier' && card.points.reduce((a, b) => a + b, 0) !== 0)
+        const negativeModifier = botHand.find((card) => card.type === 'modifier' && card.points.some((point) => point < 0))
+        const modifier = negativeModifier || botHand.find((card) => card.type === 'modifier' && card.points.reduce((a, b) => a + b, 0) !== 0)
         if (modifier) {
           const target = modifier.points.some((point) => point < 0) ? weakest(livingChars(rival)) : pointLeaderFor(modifier)
           if (target) {
@@ -199,7 +209,7 @@ function App() {
           continue
         }
 
-        const discard = [...botHand].sort((a, b) => (a.type === 'modifier' ? a.points.reduce((x, y) => x + y, 0) : 0) - (b.type === 'modifier' ? b.points.reduce((x, y) => x + y, 0) : 0))[0]
+        const discard = botHand.find((card) => card.type === 'death') || [...botHand].sort((a, b) => (a.type === 'modifier' ? a.points.reduce((x, y) => x + y, 0) : 0) - (b.type === 'modifier' ? b.points.reduce((x, y) => x + y, 0) : 0))[0]
         removeCard(discard)
         next.log.unshift(`${rival.name} discarded “${discard.title}”. The rival made a quiet, regrettable choice.`)
       }
@@ -233,7 +243,7 @@ function App() {
       const target = targetRef ? next.players.find((p) => p.id === targetRef.playerId)?.chars.find((c) => c.id === targetRef.charId) : null
       const actor = next.players.find((p) => p.id === next.active)
       if (selected.type === 'modifier' && (!target || !target.alive)) return g
-      if (selected.type === 'death' && (!target || !target.alive || score(target) >= 0)) return g
+      if (selected.type === 'death' && !canPlayDeathOn(target)) return g
       next.hand = next.hand.filter((card) => card.id !== selected.id)
       if (selected.type === 'modifier') {
         target.modifiers.push(selected)
