@@ -62,6 +62,7 @@ const modifiers = modifierSeed.map(([title, top, middle, bottom, icon], index) =
 
 const allCards = [...modifiers, ...events, ...deaths]
 const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thronesEvents, ...thronesDeaths] : allCards
+const isPointNullifyingDeath = (card) => card.type === 'death' && card.title === 'died without cares'
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
 const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
 
@@ -114,6 +115,7 @@ function App() {
   const [mode, setMode] = useState('original')
   const [botCount, setBotCount] = useState(1)
   const [bugReportStatus, setBugReportStatus] = useState('')
+  const [targeting, setTargeting] = useState(false)
   useEffect(() => {
     if (!game.active.startsWith('bot-') || screen === 'lobby') return undefined
     const timer = setTimeout(runBotTurn, 650)
@@ -127,12 +129,19 @@ function App() {
   const familyScore = (player) => player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
   const playable = selected && (selected.type === 'event' || selected.type === 'death' || selected.type === 'modifier')
 
-  const setSelection = (card) => setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, target: null }))
-  const canTargetCharacter = (character) => Boolean(selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || score(character) < 0))
-  const chooseTarget = (playerId, charId) => setGame((g) => {
-    const character = g.players.find((player) => player.id === playerId)?.chars.find((candidate) => candidate.id === charId)
-    return character && canTargetCharacter(character) ? { ...g, target: { playerId, charId } } : g
-  })
+  const setSelection = (card) => {
+    setTargeting(false)
+    setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, target: null }))
+  }
+  const canTargetCharacter = (character) => Boolean(targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || score(character) < 0))
+  const chooseTarget = (playerId, charId) => {
+    const character = game.players.find((player) => player.id === playerId)?.chars.find((candidate) => candidate.id === charId)
+    if (!character || !canTargetCharacter(character)) return
+    const target = { playerId, charId }
+    setTargeting(false)
+    setGame((g) => ({ ...g, target }))
+    window.setTimeout(() => playSelected(target), 0)
+  }
 
   const drawToLimit = (state) => {
     const next = { ...state, hand: [...state.hand], deck: [...state.deck], discard: [...state.discard] }
@@ -165,7 +174,7 @@ function App() {
       })[0]
 
       for (let action = 0; action < 2 && botHand.length; action += 1) {
-        const death = botHand.find((card) => card.type === 'death' && livingChars(opponent).some((character) => score(character) < 0))
+        const death = botHand.find((card) => isPointNullifyingDeath(card) && livingChars(opponent).some((character) => score(character) < 0))
         if (death) {
           const target = weakest(livingChars(opponent).filter((character) => score(character) < 0))
           target.alive = false
@@ -214,11 +223,17 @@ function App() {
     })
   }
 
-  const playSelected = () => {
+  const playSelected = (targetOverride = null) => {
     if (!selected || !playable) return
+    const chosenTarget = targetOverride || game.target
+    if (selected.type !== 'event' && !chosenTarget) {
+      setTargeting(true)
+      return
+    }
     setGame((g) => {
       const next = structuredClone(g)
-      const target = next.target ? next.players.find((p) => p.id === next.target.playerId)?.chars.find((c) => c.id === next.target.charId) : null
+      const targetRef = targetOverride || next.target
+      const target = targetRef ? next.players.find((p) => p.id === targetRef.playerId)?.chars.find((c) => c.id === targetRef.charId) : null
       const actor = next.players.find((p) => p.id === next.active)
       if (selected.type === 'modifier' && (!target || !target.alive)) return g
       if (selected.type === 'death' && (!target || !target.alive || score(target) >= 0)) return g
@@ -236,6 +251,7 @@ function App() {
       next.discard.push(selected)
       next.plays += 1
       next.selectedCard = null; next.target = null
+      setTargeting(false)
       if (next.plays >= 2 || selected.type === 'death') {
         next.plays = 0
         if (next.active === 'player') {
@@ -254,6 +270,7 @@ function App() {
 
   const discardSelected = () => {
     if (!selected) return
+    setTargeting(false)
     setGame((g) => {
       const next = structuredClone(g)
       next.hand = next.hand.filter((card) => card.id !== selected.id)
@@ -280,7 +297,7 @@ function App() {
     setBugReportStatus('Gloom bug report copied')
     window.setTimeout(() => setBugReportStatus(''), 3500)
   }
-  const targetHint = selected?.type === 'death' ? 'Choose a living character with negative Self-Worth.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
+  const targetHint = !targeting ? 'Select Play, then choose an eligible character.' : selected?.type === 'death' ? 'Choose a living character with negative Self-Worth.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
 
   return <div className="app-shell">
     <header className="topbar">
@@ -295,7 +312,7 @@ function App() {
         <div className="hand-panel">
           <div className="section-heading"><span className="eyebrow">Your hand · {game.hand.length} / 5</span></div>
           <div className="hand-fan-scroll"><div className="hand-fan" style={{ width: `${game.hand.length ? (typeof window !== 'undefined' && window.innerWidth <= 700 ? 96 : 124) + (game.hand.length <= 1 ? 0 : (typeof window !== 'undefined' && window.innerWidth <= 700 ? 43 : 72)) * (game.hand.length - 1) : 0}px` }}>{game.hand.map((card, index) => { const compactHand = typeof window !== 'undefined' && window.innerWidth <= 700; const step = game.hand.length <= 1 ? 0 : compactHand ? 43 : 72; const rotation = game.hand.length <= 1 ? 0 : (index / (game.hand.length - 1) - .5) * 18; const selected = game.selectedCard === card.id; return <div className={`hand-fan-card ${selected ? 'selected' : ''}`} key={card.id} style={{ left: `${index * step}px`, zIndex: selected ? 100 : index, transform: `rotate(${rotation}deg) translateY(${selected ? -10 : 0}px) scale(${selected ? 1.04 : 1})` }}><HandCard card={card} selected={selected} onClick={() => setSelection(card)} /></div> })}</div></div>
-          {selected && <div className="card-play-stage"><div className="card-play-preview"><HandCard card={selected} selected onClick={() => {}} /></div><span className="target-hint">{targetHint}</span><div className="card-play-actions"><button className="primary-button" disabled={!playable || (selected.type !== 'event' && !game.target)} onClick={playSelected}>Play</button><button className="ghost-button" onClick={discardSelected}>Discard</button></div></div>}
+          {selected && <div className="card-play-stage"><div className="card-play-preview"><HandCard card={selected} selected onClick={() => {}} /></div><span className="target-hint">{targetHint}</span><div className="card-play-actions"><button className="primary-button" disabled={!playable} onClick={playSelected}>Play</button><button className="ghost-button" onClick={discardSelected}>Discard</button></div></div>}
         </div>
       </section>
     </main>
