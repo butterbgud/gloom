@@ -418,14 +418,25 @@ function App() {
       next.hand = next.hand.filter((card) => card.id !== selected.id)
       next.discard.push(selected)
       next.log.unshift(`${next.players.find((p) => p.id === next.active).name} discarded “${selected.title}”. Even the deck looked away.`)
-      next.selectedCard = null; next.targeting = false; next.target = null; next.plays = 0
-      if (next.active === 'player') {
+      next.selectedCard = null; next.targeting = false; next.target = null; next.plays += 1
+      if (next.plays >= 2) {
+        next.plays = 0
         next.active = 'bot-1'
         next.log.unshift(`${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
-      } else {
-        next.active = 'player'; next.turn += 1
-        next.log.unshift(`Turn ${next.turn}: Your family inherits the sorrow.`)
+        return finalizeGame(drawToLimit(next))
       }
+      return finalizeGame(next)
+    })
+  }
+
+  const passTurn = () => {
+    if (game.active !== 'player' || game.targeting) return
+    setGame((g) => {
+      const next = structuredClone(g)
+      next.plays = 0
+      next.selectedCard = null; next.targeting = false; next.target = null
+      next.active = 'bot-1'
+      next.log.unshift(`${next.players.find((p) => p.id === next.active).name} inherits the sorrow.`)
       return finalizeGame(drawToLimit(next))
     })
   }
@@ -452,7 +463,7 @@ function App() {
           {game.players.map((player) => <FamilyBoard key={player.id} player={player} mode={game.mode} active={player.id === game.active} target={game.target} onTarget={chooseTarget} targetable={canTargetCharacter} hideDead={game.targeting && selected?.type !== 'event'} />)}
         </div>
         <div className="hand-panel">
-          <div className="section-heading"><span className="eyebrow">Your hand · {game.hand.length} / 5</span></div>
+          <div className="section-heading"><span className="eyebrow">Your hand · {game.hand.length} / 5</span><button className="ghost-button" disabled={game.active !== 'player' || game.targeting} onClick={passTurn}>Pass</button></div>
           <div className="hand-fan-scroll"><div className="hand-fan" style={{ width: `${game.hand.length ? (typeof window !== 'undefined' && window.innerWidth <= 700 ? 96 : 124) + (game.hand.length <= 1 ? 0 : (typeof window !== 'undefined' && window.innerWidth <= 700 ? 43 : 72)) * (game.hand.length - 1) : 0}px` }}>{game.hand.map((card, index) => { const compactHand = typeof window !== 'undefined' && window.innerWidth <= 700; const step = game.hand.length <= 1 ? 0 : compactHand ? 43 : 72; const rotation = game.hand.length <= 1 ? 0 : (index / (game.hand.length - 1) - .5) * 18; const selected = game.selectedCard === card.id; return <div className={`hand-fan-card ${selected ? 'selected' : ''}`} key={card.id} style={{ left: `${index * step}px`, zIndex: selected ? 100 : index, transform: `rotate(${rotation}deg) translateY(${selected ? -10 : 0}px) scale(${selected ? 1.04 : 1})` }}><HandCard card={card} selected={selected} onClick={() => setSelection(card)} /></div> })}</div></div>
           {selected && <div className="card-play-stage">{!game.targeting && <div className="card-play-preview"><HandCard card={selected} selected onClick={() => setSelection(selected)} /></div>}<span className="target-hint">{targetHint}</span>{!game.targeting && <div className="card-play-actions"><button className="primary-button" disabled={!playable || deathBlocked} onClick={(event) => { event.stopPropagation(); playSelected() }}>Play</button><button className="ghost-button" onClick={(event) => { event.stopPropagation(); discardSelected() }}>Discard</button></div>}</div>}
         </div>
