@@ -171,8 +171,14 @@ button { font: inherit; color: inherit; }
 .edition-option.coming-soon { position: relative; overflow: hidden; cursor: not-allowed; filter: saturate(.35); opacity: .7; }
 .edition-option.coming-soon::after { content: ''; position: absolute; inset: 46% -12% auto; height: 24px; transform: rotate(-8deg); background: repeating-linear-gradient(135deg, #d7a62b 0 12px, #211b16 12px 24px); box-shadow: 0 1px 4px #0009; }
 .construction-tape { position: absolute; z-index: 1; left: 0; right: 0; top: 46%; transform: rotate(-8deg); color: #f6e7bb; text-align: center; font: 700 8px/24px 'Cinzel', serif; letter-spacing: .08em; text-shadow: 0 1px 2px #000; }
+.character-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: 100%; overflow: visible; }
+.character-card { display: block; width: 100%; min-width: 0; height: auto; min-height: 0; margin-left: 0; aspect-ratio: 714 / 970; position: relative; }
+.character-card .portrait { width: 58%; height: 55%; }
+.character-overlay { width: 100%; height: 100%; aspect-ratio: 714 / 970; object-fit: fill; }
 @media (max-width: 700px) {
   .family-board, .active-board { padding-top: 6px; padding-bottom: 6px; }
+  .character-row { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .character-card { aspect-ratio: 714 / 970; }
   .card-play-stage { max-width: calc(100vw - 20px); padding: 9px; }
   .card-play-preview .hand-card { width: 190px; min-height: 260px; }
   .card-play-preview .hand-card-art { height: 260px; min-height: 260px; }
