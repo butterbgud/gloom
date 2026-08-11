@@ -220,7 +220,7 @@ function familyValue(player) {
   }, 0)
 }
 
-function applyEventEffect(state, card, actorId) {
+function applyEventEffect(state, card, actorId, eventTarget = null) {
   const actor = state.players.find((player) => player.id === actorId)
   if (!actor) return state
   const livingChars = (player) => player.chars.filter((character) => character.alive)
@@ -287,7 +287,7 @@ function applyEventEffect(state, card, actorId) {
       break
     }
     case 'An Unpleasant Surprise': {
-      const target = livingChars(actor)[0]
+      const target = eventTarget || livingChars(actor)[0]
       const modifier = target && firstModifier(target)
       if (target && modifier) { removeModifier(target, modifier); state.discard.push(modifier) }
       break
@@ -392,6 +392,7 @@ function App() {
   if (game.gameOver) return <GameOver game={game} onRestart={() => { setGame(makeGame(chosenFamily, mode, botCount)); setScreen('table') }} />
   const activePlayer = game.players.find((p) => p.id === game.active)
   const selected = game.hand.find((card) => card.id === game.selectedCard)
+  const handLimit = modifierDrawLimit(game, 'player')
   const familyScore = (player) => player.chars.filter((c) => !c.alive).reduce((sum, c) => sum + score(c), 0)
   const playable = selected && (selected.type === 'event' || selected.type === 'death' || selected.type === 'modifier')
   const deathBlocked = selected?.type === 'death' && game.plays > 0
@@ -399,7 +400,7 @@ function App() {
   const setSelection = (card) => {
     setGame((g) => ({ ...g, selectedCard: g.selectedCard === card.id ? null : card.id, targeting: false, target: null }))
   }
-  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && selected.type !== 'event' && character.alive && (selected.type !== 'death' || canPlayDeathOn(character, selected, game.heartDeathOverride)) && (selected.type !== 'modifier' || selected.ability !== 'heartOnly' || visibleIcon(character) === 'heart'))
+  const canTargetCharacter = (character) => Boolean(game.targeting && selected && game.active === 'player' && character.alive && ((selected.type === 'event' && selected.title === 'An Unpleasant Surprise') || (selected.type !== 'event' && (selected.type !== 'death' || canPlayDeathOn(character, selected, game.heartDeathOverride)) && (selected.type !== 'modifier' || selected.ability !== 'heartOnly' || visibleIcon(character) === 'heart'))))
   const chooseTarget = (playerId, charId) => {
     const character = game.players.find((player) => player.id === playerId)?.chars.find((candidate) => candidate.id === charId)
     if (!character || !canTargetCharacter(character)) return
@@ -534,7 +535,8 @@ function App() {
   const playSelected = (targetOverride = null) => {
     if (!selected || !playable || deathBlocked) return
     const chosenTarget = targetOverride || game.target
-    if (selected.type !== 'event' && !chosenTarget) {
+    const eventNeedsTarget = selected.type === 'event' && selected.title === 'An Unpleasant Surprise'
+    if ((selected.type !== 'event' || eventNeedsTarget) && !chosenTarget) {
       setGame((g) => ({ ...g, targeting: true }))
       return
     }
@@ -545,6 +547,7 @@ function App() {
       const actor = next.players.find((p) => p.id === next.active)
       if (selected.type === 'modifier' && (!target || !target.alive || (selected.ability === 'heartOnly' && visibleIcon(target) !== 'heart'))) return g
       if (selected.type === 'event' && actor.chars.some((character) => character.modifiers.some((card) => card.ability === 'blockEvents'))) return g
+      if (eventNeedsTarget && (!target || !target.alive)) return g
       if (selected.type === 'death' && !canPlayDeathOn(target, selected, next.heartDeathOverride)) return g
       next.hand = next.hand.filter((card) => card.id !== selected.id)
       if (selected.type === 'modifier') {
@@ -557,7 +560,7 @@ function App() {
         target.modifiers.push(selected)
         next.log.unshift(`${actor.name} sealed ${target.name}'s fate: “${selected.title}”. The character is dead.`)
       } else {
-        applyEventEffect(next, selected, actor.id)
+        applyEventEffect(next, selected, actor.id, target)
         next.log.unshift(`${actor.name} played Event “${selected.title}”. ${selected.text}`)
       }
       next.discard.push(selected)
@@ -685,7 +688,7 @@ function App() {
     setBugReportStatus('Gloom bug report copied')
     window.setTimeout(() => setBugReportStatus(''), 3500)
   }
-  const targetHint = deathBlocked ? 'Untimely Deaths must be your first action.' : !game.targeting ? 'Select Play, then choose an eligible character.' : selected?.type === 'death' ? 'Choose any living character.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
+  const targetHint = deathBlocked ? 'Untimely Deaths must be your first action.' : !game.targeting ? 'Select Play, then choose an eligible character.' : selected?.title === 'An Unpleasant Surprise' ? 'Choose a living character to lose its top Modifier.' : selected?.type === 'death' ? 'Choose any living character.' : selected?.type === 'modifier' ? 'Choose any living character.' : 'Events resolve immediately.'
 
   return <div className="app-shell">
     <header className="topbar">
@@ -699,7 +702,7 @@ function App() {
           {game.players.map((player) => <FamilyBoard key={player.id} player={player} mode={game.mode} active={player.id === game.active} target={game.target} onTarget={chooseTarget} targetable={canTargetCharacter} hideDead={game.targeting && selected?.type !== 'event'} />)}
         </div>
         <div className="hand-panel">
-          <div className="section-heading"><span className="eyebrow">Your hand · {game.hand.length} / 5</span><button className="ghost-button" disabled={game.active !== 'player' || game.targeting} onClick={passTurn}>Pass</button></div>
+          <div className="section-heading"><span className="eyebrow">Your hand · {game.hand.length} / {handLimit}</span><button className="ghost-button" disabled={game.active !== 'player' || game.targeting} onClick={passTurn}>Pass</button></div>
           <div className="hand-fan-scroll"><div className="hand-fan" style={{ width: `${game.hand.length ? (typeof window !== 'undefined' && window.innerWidth <= 700 ? 96 : 124) + (game.hand.length <= 1 ? 0 : (typeof window !== 'undefined' && window.innerWidth <= 700 ? 43 : 72)) * (game.hand.length - 1) : 0}px` }}>{game.hand.map((card, index) => { const compactHand = typeof window !== 'undefined' && window.innerWidth <= 700; const step = game.hand.length <= 1 ? 0 : compactHand ? 43 : 72; const rotation = game.hand.length <= 1 ? 0 : (index / (game.hand.length - 1) - .5) * 18; const selected = game.selectedCard === card.id; return <div className={`hand-fan-card ${selected ? 'selected' : ''}`} key={card.id} style={{ left: `${index * step}px`, zIndex: selected ? 100 : index, transform: `rotate(${rotation}deg) translateY(${selected ? -10 : 0}px) scale(${selected ? 1.04 : 1})` }}><HandCard card={card} selected={selected} onClick={() => setSelection(card)} /></div> })}</div></div>
           {selected && <div className="card-play-stage">{!game.targeting && <div className="card-play-preview"><HandCard card={selected} selected onClick={() => setSelection(selected)} /></div>}<span className="target-hint">{targetHint}</span>{!game.targeting && <div className="card-play-actions"><button className="primary-button" disabled={!playable || deathBlocked} onClick={(event) => { event.stopPropagation(); playSelected() }}>Play</button><button className="ghost-button" onClick={(event) => { event.stopPropagation(); discardSelected() }}>Discard</button></div>}</div>}
         </div>
