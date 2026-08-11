@@ -156,3 +156,21 @@ button { font: inherit; color: inherit; }
   .hand-fan-card .hand-card { min-height: 130px; }
   .hand-card.asset-card .hand-card-art { min-height: 130px; }
 }
+.families-grid { gap: 4px; }
+.family-board, .active-board { border: 0; box-shadow: none; padding-top: 10px; padding-bottom: 10px; }
+.character-row { padding-top: 4px; padding-bottom: 4px; }
+.character-card:hover, .character-card.targeted { transform: translateY(-3px); }
+.card-play-stage { position: fixed; z-index: 80; top: 50%; left: 50%; display: flex; flex-direction: column; align-items: center; gap: 9px; transform: translate(-50%, -50%); padding: 14px; border: 1px solid #68404b; background: rgba(25, 17, 24, .96); box-shadow: 0 24px 70px #000c; pointer-events: none; }
+.card-play-stage > * { pointer-events: auto; }
+.hand-fan-card.selected { visibility: hidden; }
+.card-play-preview .hand-card { width: 260px; min-height: 350px; padding: 0; transform: none !important; }
+.card-play-preview .hand-card-art { width: 100%; height: 350px; min-height: 350px; margin: 0; object-fit: cover; }
+.card-play-preview .hand-card:not(.asset-card) { padding: 18px; }
+.card-play-actions { display: flex; gap: 8px; width: 100%; }
+.card-play-actions button { flex: 1; }
+@media (max-width: 700px) {
+  .family-board, .active-board { padding-top: 6px; padding-bottom: 6px; }
+  .card-play-stage { max-width: calc(100vw - 20px); padding: 9px; }
+  .card-play-preview .hand-card { width: 190px; min-height: 260px; }
+  .card-play-preview .hand-card-art { height: 260px; min-height: 260px; }
+}

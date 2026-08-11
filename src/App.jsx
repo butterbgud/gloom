@@ -65,8 +65,17 @@ const cardsForMode = (mode) => mode === 'thrones' ? [...thronesModifiers, ...thr
 const BUILD_VERSION = typeof __BUILD_VERSION__ !== 'undefined' ? __BUILD_VERSION__ : 'dev'
 const living = (name, family, index, portrait = null) => ({ id: `${family}-${index}`, name, family, portrait, alive: true, modifiers: [], pathos: 0 })
 
+function shuffleDeck(cards) {
+  const deck = [...cards]
+  for (let index = deck.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1))
+    ;[deck[index], deck[swap]] = [deck[swap], deck[index]]
+  }
+  return deck
+}
+
 function seededDeck(mode = 'original') {
-  return [...cardsForMode(mode)].sort((a, b) => (a.id.charCodeAt(0) * 17 + a.id.length) - (b.id.charCodeAt(0) * 13 + b.id.length))
+  return shuffleDeck(cardsForMode(mode))
 }
 
 function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
@@ -86,12 +95,15 @@ function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
   }
 }
 
-function score(character) {
-  const visiblePoints = character.modifiers.reduce((visible, card) => {
+function visiblePoints(character) {
+  return character.modifiers.reduce((visible, card) => {
     if (!card.points) return visible
     return visible.map((point, index) => card.points[index] || point)
   }, [0, 0, 0])
-  return visiblePoints.reduce((total, point) => total + point, 0)
+}
+
+function score(character) {
+  return visiblePoints(character).reduce((total, point) => total + point, 0)
 }
 
 function App() {
@@ -146,14 +158,11 @@ function App() {
         next.discard.push(card)
       }
       const livingChars = (player) => player.chars.filter((character) => character.alive)
-      const weakest = (characters) => characters.sort((a, b) => score(a) - score(b))[0]
-      const bestModifier = (card) => {
-        const own = livingChars(rival).map((character) => ({ character, value: score(character) + card.points.reduce((a, b) => a + b, 0) }))
-        const enemy = livingChars(opponent).map((character) => ({ character, value: score(character) - card.points.reduce((a, b) => a + b, 0) }))
-        const ownGain = own.sort((a, b) => b.value - a.value)[0]
-        const enemyGain = enemy.sort((a, b) => b.value - a.value)[0]
-        return card.points.reduce((a, b) => a + b, 0) >= 0 ? { ...ownGain, mode: 'own' } : { ...enemyGain, mode: 'enemy' }
-      }
+      const weakest = (characters) => [...characters].sort((a, b) => score(a) - score(b))[0]
+      const pointLeaderFor = (card) => [...livingChars(opponent)].sort((a, b) => {
+        const value = (character) => card.points.reduce((total, point, index) => total + (point > 0 ? visiblePoints(character)[index] : 0), 0)
+        return value(b) - value(a) || score(b) - score(a)
+      })[0]
 
       for (let action = 0; action < 2 && botHand.length; action += 1) {
         const death = botHand.find((card) => card.type === 'death' && livingChars(opponent).some((character) => score(character) < 0))
@@ -168,11 +177,11 @@ function App() {
 
         const modifier = botHand.find((card) => card.type === 'modifier' && card.points.reduce((a, b) => a + b, 0) !== 0)
         if (modifier) {
-          const choice = bestModifier(modifier)
-          if (choice?.character) {
-            choice.character.modifiers.push(modifier)
+          const target = modifier.points.some((point) => point < 0) ? weakest(livingChars(rival)) : pointLeaderFor(modifier)
+          if (target) {
+            target.modifiers.push(modifier)
             removeCard(modifier)
-            next.log.unshift(`${rival.name} played “${modifier.title}” on ${choice.character.name}.`)
+            next.log.unshift(`${rival.name} played “${modifier.title}” on ${target.name}.`)
             continue
           }
         }
@@ -285,8 +294,8 @@ function App() {
         </div>
         <div className="hand-panel">
           <div className="section-heading"><span className="eyebrow">Your hand · {game.hand.length} / 5</span></div>
-          <div className="hand-fan-scroll"><div className="hand-fan" style={{ width: `${game.hand.length ? (typeof window !== 'undefined' && window.innerWidth <= 700 ? 96 : 124) + (game.hand.length <= 1 ? 0 : (typeof window !== 'undefined' && window.innerWidth <= 700 ? 43 : 72)) * (game.hand.length - 1) : 0}px` }}>{game.hand.map((card, index) => { const compactHand = typeof window !== 'undefined' && window.innerWidth <= 700; const step = game.hand.length <= 1 ? 0 : compactHand ? 43 : 72; const rotation = game.hand.length <= 1 ? 0 : (index / (game.hand.length - 1) - .5) * 18; const selected = game.selectedCard === card.id; return <div className="hand-fan-card" key={card.id} style={{ left: `${index * step}px`, zIndex: selected ? 100 : index, transform: `rotate(${rotation}deg) translateY(${selected ? -10 : 0}px) scale(${selected ? 1.04 : 1})` }}><HandCard card={card} selected={selected} onClick={() => setSelection(card)} /></div> })}</div></div>
-          {selected && <div className={`card-inspector ${selected.asset ? 'asset-inspector' : ''}`}>{selected.asset ? <img className="inspector-card-art" src={selected.asset} alt={selected.title} /> : <><div className={`inspector-icon ${selected.type}`}>{selected.type === 'modifier' ? '✦' : selected.type === 'death' ? '†' : '♢'}</div><div className="inspector-copy"><span className="eyebrow">{selected.type}</span><h3>{selected.title}</h3><p>{selected.text || selected.flavor}</p>{selected.points && <div className="point-strip">{selected.points.map((point, i) => <span key={i} className={point > 0 ? 'good' : point < 0 ? 'bad' : ''}>{point ? `${point > 0 ? '+' : ''}${point}` : '—'}</span>)}</div>}</div></>}<div className="inspector-actions"><span className="target-hint">{targetHint}</span><button className="primary-button" disabled={!playable || (selected.type !== 'event' && !game.target)} onClick={playSelected}>Play</button><button className="ghost-button" onClick={discardSelected}>Discard</button></div></div>}
+          <div className="hand-fan-scroll"><div className="hand-fan" style={{ width: `${game.hand.length ? (typeof window !== 'undefined' && window.innerWidth <= 700 ? 96 : 124) + (game.hand.length <= 1 ? 0 : (typeof window !== 'undefined' && window.innerWidth <= 700 ? 43 : 72)) * (game.hand.length - 1) : 0}px` }}>{game.hand.map((card, index) => { const compactHand = typeof window !== 'undefined' && window.innerWidth <= 700; const step = game.hand.length <= 1 ? 0 : compactHand ? 43 : 72; const rotation = game.hand.length <= 1 ? 0 : (index / (game.hand.length - 1) - .5) * 18; const selected = game.selectedCard === card.id; return <div className={`hand-fan-card ${selected ? 'selected' : ''}`} key={card.id} style={{ left: `${index * step}px`, zIndex: selected ? 100 : index, transform: `rotate(${rotation}deg) translateY(${selected ? -10 : 0}px) scale(${selected ? 1.04 : 1})` }}><HandCard card={card} selected={selected} onClick={() => setSelection(card)} /></div> })}</div></div>
+          {selected && <div className="card-play-stage"><div className="card-play-preview"><HandCard card={selected} selected onClick={() => {}} /></div><span className="target-hint">{targetHint}</span><div className="card-play-actions"><button className="primary-button" disabled={!playable || (selected.type !== 'event' && !game.target)} onClick={playSelected}>Play</button><button className="ghost-button" onClick={discardSelected}>Discard</button></div></div>}
         </div>
       </section>
     </main>
