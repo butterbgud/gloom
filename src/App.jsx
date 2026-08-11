@@ -130,13 +130,17 @@ const modifierSeed = [
   ['was shunned by society', [-15, -15, -15], 'none', 'm54.webp'],
 ]
 const modifierAbilities = {
-  'was married magnificently': 'drawLimit', 'found love on the lake': 'drawLimit',
+  'was distressed by dysentery': 'previousKeepTwo',
+  'was married magnificently': 'drawLimitUp', 'found love on the lake': 'drawLimitUp',
   'was written out of the will': 'skipDraw', 'was swindled by a salesman': 'skipDraw',
   'was wondrously well wed': 'drawTwo', 'was clever at cards': 'drawOne',
   'was diverted by drink': 'discardOne', 'found maggots in the meat': 'discardOne',
-  'was sickened by salmon': 'discardOnModifier',
-  'was blessed by a Bishop': 'refillHand', 'was crippled by creditors': 'transferTwo',
-  'landed a legacy': 'drawTwo',
+  'was jinxed by gypsies': 'drawLimitDown', 'grew old without grace': 'previousDiscardTwo',
+  'was sickened by salmon': 'discardOnModifier', 'was blessed by a Bishop': 'refillHand',
+  'was crippled by creditors': 'previousKeepTwo', 'was pestered by poltergeists': 'previousDiscardOne',
+  'landed a legacy': 'drawTwo', 'was greeted by ghosts': 'discardThree',
+  'contracted consumption': 'drawLimitDown', 'was plagued by the pox': 'drawLimitDown',
+  'was hunted by horrors': 'skipTurn', 'was driven to drink': 'discardOne',
 }
 const modifiers = modifierSeed.map(([title, points, icon, asset], index) => ({
   id: `modifier-${index}`, type: 'modifier', title, points, icon, asset: `/assets/${asset}`, ability: modifierAbilities[title] || null, flavor: 'A fresh misfortune takes root.'
@@ -179,7 +183,7 @@ function makeGame(playerFamily = 'castle', mode = 'original', botCount = 1) {
   const botHandStart = handStart
   const deckStart = botHandStart + botCount * 5
   return {
-    turn: 1, active: 'player', plays: 0, playLimit: 2, heartDeathOverride: false, skipDraw: {}, selectedCard: null, targeting: false, target: null, mode, botCount, deck: deck.slice(deckStart), discard: [],
+    turn: 1, active: 'player', plays: 0, playLimit: 2, heartDeathOverride: false, skipDraw: {}, skipTurn: {}, selectedCard: null, targeting: false, target: null, mode, botCount, deck: deck.slice(deckStart), discard: [],
     hand: deck.slice(0, handStart), botHands: Object.fromEntries(bots.map((bot, index) => [bot.id, deck.slice(botHandStart + index * 5, botHandStart + (index + 1) * 5)])), log: ['The table is set. Five families wait beneath the black sky.', `Your family: ${mode === 'thrones' ? families[playerFamily].thronesName : families[playerFamily].name}. ${bots.length} rival${bots.length === 1 ? '' : 's'} wait in the dark.`],
     players, gameOver: false, winnerId: null, pendingEvent: null,
     history: [{ turn: 1, values: Object.fromEntries(players.map((player) => [player.id, familyValue(player)])) }],
@@ -291,7 +295,7 @@ function applyEventEffect(state, card, actorId) {
 
 function modifierDrawLimit(state, playerId) {
   const player = state.players.find((candidate) => candidate.id === playerId)
-  return 5 + (player?.chars || []).reduce((total, character) => total + character.modifiers.filter((modifier) => modifier.ability === 'drawLimit').length, 0)
+  return Math.max(0, 5 + (player?.chars || []).reduce((total, character) => total + character.modifiers.reduce((value, modifier) => value + (modifier.ability === 'drawLimitUp' ? 1 : modifier.ability === 'drawLimitDown' ? -1 : 0), 0), 0))
 }
 
 function applyModifierAbility(state, modifier, actorId) {
@@ -299,20 +303,20 @@ function applyModifierAbility(state, modifier, actorId) {
   if (!hand || !modifier.ability) return state
   const discardOne = () => { if (hand.length) state.discard.push(hand.shift()) }
   const draw = (count) => { while (count > 0 && state.deck.length) { hand.push(state.deck.shift()); count -= 1 } }
+  const previousPlayer = state.players[(state.players.findIndex((player) => player.id === actorId) - 1 + state.players.length) % state.players.length]
+  const previousHand = previousPlayer?.id === 'player' ? state.hand : state.botHands[previousPlayer?.id]
+  const giveToPrevious = (count) => { const taken = hand.splice(0, Math.min(count, hand.length)); if (previousHand) previousHand.push(...taken) }
   switch (modifier.ability) {
     case 'skipDraw': state.skipDraw[actorId] = true; break
+    case 'skipTurn': state.skipTurn[actorId] = true; break
     case 'drawTwo': draw(2); break
     case 'drawOne': draw(1); break
     case 'discardOne': discardOne(); break
     case 'refillHand': while (hand.length < modifierDrawLimit(state, actorId) && state.deck.length) hand.push(state.deck.shift()); break
-    case 'transferTwo': {
-      const actorIndex = state.players.findIndex((player) => player.id === actorId)
-      const receiver = state.players[(actorIndex + 1) % state.players.length]
-      const taken = hand.splice(0, Math.min(2, hand.length))
-      if (receiver.id === 'player') state.hand.push(...taken)
-      else state.botHands[receiver.id].push(...taken)
-      break
-    }
+    case 'previousKeepTwo': giveToPrevious(2); break
+    case 'previousDiscardTwo': discardOne(); discardOne(); break
+    case 'previousDiscardOne': discardOne(); break
+    case 'discardThree': discardOne(); discardOne(); discardOne(); break
     case 'discardOnModifier': discardOne(); break
     default: break
   }
@@ -345,6 +349,18 @@ function App() {
     const timer = setTimeout(runBotTurn, 650)
     return () => clearTimeout(timer)
   }, [game.active, game.turn, game.pendingEvent, screen])
+  useEffect(() => {
+    if (screen === 'lobby' || game.gameOver || game.pendingEvent || game.active !== 'player' || !game.skipTurn?.player) return undefined
+    const timer = setTimeout(() => setGame((g) => {
+      const next = structuredClone(g)
+      next.skipTurn.player = false
+      next.turn += 1
+      next.active = 'bot-1'
+      next.log.unshift('Your family loses its next turn to a dreadful modifier.')
+      return finalizeGame(drawBotToLimit(drawToLimit(next)))
+    }), 350)
+    return () => clearTimeout(timer)
+  }, [game.active, game.turn, game.pendingEvent, game.skipTurn, screen])
   useEffect(() => {
     if (!game.pendingEvent || game.gameOver) return undefined
     const timer = setTimeout(resolvePendingEvent, 5000)
@@ -397,6 +413,16 @@ function App() {
       const rival = next.players.find((p) => p.id === next.active)
       const opponent = next.players.find((p) => p.id === 'player')
       let botHand = next.botHands[rival.id]
+
+      if (next.skipTurn?.[rival.id]) {
+        next.skipTurn[rival.id] = false
+        next.plays = 0
+        const botIndex = next.players.findIndex((player) => player.id === rival.id)
+        const nextBot = next.players.slice(botIndex + 1).find((player) => player.id.startsWith('bot-'))
+        if (nextBot) next.active = nextBot.id
+        else { next.turn += 1; next.active = 'player' }
+        return finalizeGame(drawBotToLimit(drawToLimit(next)))
+      }
 
       const removeCard = (card) => {
         botHand = botHand.filter((candidate) => candidate.id !== card.id)
